@@ -1,6 +1,6 @@
 package v1
 
-import "gitlab.gosccap.cn/bourse/avian/pkg/app"
+import "github.com/jangozw/gin-smart/pkg/app"
 
 // 全局配置
 func Config(c *app.Context) app.Err {

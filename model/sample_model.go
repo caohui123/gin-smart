@@ -4,8 +4,8 @@ import (
 	"errors"
 	"gorm.io/gorm"
 
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
-	"gitlab.gosccap.cn/bourse/avian/pkg/util"
+	"github.com/jangozw/gin-smart/pkg/app"
+	"github.com/jangozw/gin-smart/pkg/util"
 )
 
 const (

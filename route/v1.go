@@ -1,8 +1,8 @@
 package route
 
 import (
-	v1 "gitlab.gosccap.cn/bourse/avian/api/v1"
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
+	v1 "github.com/jangozw/gin-smart/api/v1"
+	"github.com/jangozw/gin-smart/pkg/app"
 )
 
 // v1 不需要登陆

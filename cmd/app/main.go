@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gitlab.gosccap.cn/bourse/avian/errcode"
-	"gitlab.gosccap.cn/bourse/avian/route"
+	"github.com/jangozw/gin-smart/errcode"
+	"github.com/jangozw/gin-smart/route"
 
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
+	"github.com/jangozw/gin-smart/pkg/app"
 )
 
 var (

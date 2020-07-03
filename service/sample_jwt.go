@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/jangozw/go-api-facility/auth"
-	"gitlab.gosccap.cn/bourse/avian/pkg/util"
+	"github.com/jangozw/gin-smart/pkg/util"
 
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
+	"github.com/jangozw/gin-smart/pkg/app"
 )
 
 // 登陆业务实现

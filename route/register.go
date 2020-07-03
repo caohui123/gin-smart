@@ -2,9 +2,9 @@ package route
 
 import (
 	"github.com/gin-gonic/gin"
-	"gitlab.gosccap.cn/bourse/avian/middleware"
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
-	"gitlab.gosccap.cn/bourse/avian/service"
+	"github.com/jangozw/gin-smart/middleware"
+	"github.com/jangozw/gin-smart/pkg/app"
+	"github.com/jangozw/gin-smart/service"
 )
 
 func Register(router *gin.Engine) {

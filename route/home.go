@@ -1,7 +1,7 @@
 package route
 
 import (
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
+	"github.com/jangozw/gin-smart/pkg/app"
 )
 
 func registerRoot(g *app.RouteGroup) {

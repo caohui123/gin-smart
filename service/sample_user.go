@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 	"fmt"
-	"gitlab.gosccap.cn/bourse/avian/model"
-	"gitlab.gosccap.cn/bourse/avian/param"
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
+	"github.com/jangozw/gin-smart/model"
+	"github.com/jangozw/gin-smart/param"
+	"github.com/jangozw/gin-smart/pkg/app"
 	"gorm.io/gorm"
 	"time"
 )

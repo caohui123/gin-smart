@@ -14,11 +14,6 @@
 
 
 
-
-# 使用
-## 安装gofresh实时监测代码变动即时编译
-参考：https://github.com/jangozw/gofresh
-
 ## 测试API接口
 
 ```bash
@@ -38,7 +33,7 @@ handler 有两种实现, 可以写成对象也可直接函数 示范：
 
 ```text
     // 定义一个路由
-	g.GET("/config").HandlerFunc(v1.Config)
+	g.GET("/login").HandlerFunc(v1.SampleLogin)
 
 ```
 
@@ -46,61 +41,24 @@ handler 有两种实现, 可以写成对象也可直接函数 示范：
 
 ```go
 package v1
-
-import "gitlab.gosccap.cn/bourse/avian/pkg/app"
-
-func Config(c *app.Context) app.Err {
-	var data = map[string]interface{}{
-		"title":  "global config",
-		"detail": "xxx",
+func SampleLogin(c *app.Context) app.Err {
+	var p param.LoginRequest
+	if err := c.BindInput(&p); err != nil {
+		return app.ErrCode(errcode.ErrRequestParams)
 	}
-	c.Output(data)
+	jwtToken, err := auth.Login(&service.JwtUserLogin{
+		AccountID:  p.Mobile,
+		AccountPwd: p.Pwd,
+	})
+	if err != nil {
+		return app.ErrCode(errcode.Failed)
+	}
+	output := param.LoginResponse{Token: string(jwtToken)}
+	c.Output(output)
 	return nil
 }
 
 ```
-
-
-或者使用handler对象：
-```go
-package v1
-
-import (
-	"gitlab.gosccap.cn/bourse/avian/errcode"
-	"gitlab.gosccap.cn/bourse/avian/param"
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
-)
-
-// 路由
-type SampleUserApiInstance struct {
-	// 请求context
-	ctx *app.Context
-
-	// 请求参数自动解析
-	input param.SampleUser
-
-	// 返回正确的结果
-	output param.SampleUserResponse
-}
-
-//
-func (api *SampleUserApiInstance) Prepare(ctx *app.Context) app.Err {
-	api.ctx = ctx
-	if err := api.ctx.MustBinds(&api.input, &api.output); err != nil {
-		return app.Error(errcode.InvalidBindValue, err.Error())
-	}
-	return nil
-}
-
-// 处理请求
-func (api *SampleUserApiInstance) Handler() app.Err {
-	// your code here...
-	api.output.Name = "Sample2"
-	api.output.Mobile = "16666666666666"
-	return nil
-}
-```
-
 
 
 

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gitlab.gosccap.cn/bourse/avian/errcode"
+	"github.com/jangozw/gin-smart/errcode"
 
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
+	"github.com/jangozw/gin-smart/pkg/app"
 )
 
 func CommonMiddleware(c *gin.Context) {

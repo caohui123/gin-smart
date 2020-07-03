@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/go-api-facility/auth"
 	"github.com/sirupsen/logrus"
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
+	"github.com/jangozw/gin-smart/pkg/app"
 )
 
 func LogToFile() gin.HandlerFunc {

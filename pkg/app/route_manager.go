@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"gitlab.gosccap.cn/bourse/avian/pkg/util"
+	"github.com/jangozw/gin-smart/pkg/util"
 )
 
 // 路由解析的生成文件和内容

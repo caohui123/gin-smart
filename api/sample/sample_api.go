@@ -2,11 +2,11 @@ package sample
 
 import (
 	"github.com/jangozw/go-api-facility/auth"
-	"gitlab.gosccap.cn/bourse/avian/errcode"
-	"gitlab.gosccap.cn/bourse/avian/model"
-	"gitlab.gosccap.cn/bourse/avian/param"
-	"gitlab.gosccap.cn/bourse/avian/pkg/app"
-	"gitlab.gosccap.cn/bourse/avian/service"
+	"github.com/jangozw/gin-smart/errcode"
+	"github.com/jangozw/gin-smart/model"
+	"github.com/jangozw/gin-smart/param"
+	"github.com/jangozw/gin-smart/pkg/app"
+	"github.com/jangozw/gin-smart/service"
 )
 
 //login api

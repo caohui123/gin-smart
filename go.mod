@@ -1,4 +1,4 @@
-module gitlab.gosccap.cn/bourse/avian
+module github.com/jangozw/gin-smart
 
 go 1.14
 

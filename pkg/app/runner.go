@@ -3,7 +3,7 @@ package app
 import (
 	"time"
 
-	"gitlab.gosccap.cn/bourse/avian/pkg/lib"
+	"github.com/jangozw/gin-smart/pkg/lib"
 )
 
 // 默认是启动根目录下的 config.ini ， 启动时候可以-config 参数指定任意路径
