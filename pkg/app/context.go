@@ -87,31 +87,12 @@ func APIHandler(route Route) gin.HandlerFunc {
 			c.JSON(http.StatusOK, ResponseFail(err))
 			return
 		}
-		// 支持两种handler形式
-		// 1, 通过定义func 直接处理
-		if route.HandlerFunc != nil {
-			if err := route.HandlerFunc(ctx); err != nil {
-				c.JSON(http.StatusOK, ResponseFail(err))
-				return
-			}
-			// 2, 通过指定的对象实例处理请求
-		} else if route.Handler != nil {
-			newInstance := route.Handler()
-			if newInstance == nil {
-				c.JSON(http.StatusOK, ResponseFailByCode(errCodeNotSetRouteHandler))
-				return
-			}
-			if err := newInstance.Prepare(ctx); err != nil {
-				c.JSON(http.StatusOK, ResponseFail(err))
-				return
-			}
-			if err := newInstance.Handler(); err != nil {
-				c.JSON(http.StatusOK, ResponseFail(err))
-				return
-			}
-			// 没有找到handler
-		} else {
+		if route.HandlerFunc == nil {
 			c.JSON(http.StatusOK, ResponseFailByCode(errCodeNotSetRouteHandler))
+			return
+		}
+		if err := route.HandlerFunc(ctx); err != nil {
+			c.JSON(http.StatusOK, ResponseFail(err))
 			return
 		}
 		// 到这里都是请求成功的
@@ -142,18 +123,24 @@ func newCtx(c *gin.Context, ro Route) (*Context, Err) {
 			return nil, Error(errCodeInvalidLoginUser, "用户id无效0")
 		}
 	}
-	// 通用参数
-	page := StringNumber(c.Query(URLParamPage))
-	pageSize := StringNumber(c.Query(URLParamPageSize))
-	pager := NewPageRequest(page.Uint(), pageSize.Uint())
-
 	// 根据路由自动判断是否是分页请求，如果是则返回结果自动加上pager
 	var outputPager bool
 	if ro.Method == "GET" && strings.HasSuffix(ro.Path, "list") {
 		outputPager = true
 	}
+	var pager Pager
+	if ro.Method == "GET" {
+		if strings.HasSuffix(ro.Path, "list") {
+			outputPager = true
+		}
+		c.ShouldBind(&pager)
+		// 通用参数
+		pager = NewPageRequest(pager.Page, pager.PageSize)
+	}
 	ctx := &Context{
 		baseContext: baseContext{c},
+		Pager:       pager,
+		LoginUser:   loginUser,
 		apiSetting: ctxApiSetting{
 			route:          ro,
 			bindInput:      nil,
@@ -162,8 +149,6 @@ func newCtx(c *gin.Context, ro Route) (*Context, Err) {
 			recordsCount:   0,
 			outputWithCode: true,
 		},
-		Pager:     pager,
-		LoginUser: loginUser,
 	}
 	return ctx, nil
 }

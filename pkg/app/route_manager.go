@@ -77,7 +77,7 @@ func parseRouteGenerateInfo(r Route) (info routeGenerateInfo, err error) {
 	if len(pathFields) < 2 {
 		return info, nil
 	}
-	paramsFileName := MainStartInfo.Root + "/param/" + strings.Join(pathFields[0:2], "_") + ".go"
+	paramsFileName := Setting.Boot + "/param/" + strings.Join(pathFields[0:2], "_") + ".go"
 	fileNameFields := pathFields[1:]
 	var apiFile string
 	num := len(pathFields)
@@ -95,7 +95,7 @@ func parseRouteGenerateInfo(r Route) (info routeGenerateInfo, err error) {
 	info = routeGenerateInfo{
 		route:                   r,
 		apiPackage:              pathFields[0],
-		apiFile:                 MainStartInfo.Root + apiFile,
+		apiFile:                 Setting.Boot + apiFile,
 		apiStructName:           apiStructName,
 		paramFile:               paramsFileName,
 		paramRequestStructName:  fmt.Sprintf("%s", apiStructName),
@@ -106,7 +106,7 @@ func parseRouteGenerateInfo(r Route) (info routeGenerateInfo, err error) {
 
 func getModule() (string, error) {
 	reg := regexp.MustCompile(`module\s+(.*?)\n`)
-	file := MainStartInfo.Root + "/go.mod"
+	file := Setting.Boot + "/go.mod"
 	content, err := util.ReadAll(file)
 	if err != nil {
 		return "", err
@@ -120,7 +120,7 @@ func getModule() (string, error) {
 
 func writeToParamsFile(info routeGenerateInfo) error {
 	fileAppends := make([]string, 0)
-	allFiles, err := util.GetAllFiles(MainStartInfo.Root + "/param")
+	allFiles, err := util.GetAllFiles(Setting.Boot + "/param")
 	if err != nil {
 		return nil
 	}
@@ -199,7 +199,7 @@ func writeToFile(file string, content string) error {
 }
 
 func apiTplContent(info routeGenerateInfo) (string, error) {
-	tpl := MainStartInfo.Root + "/pkg/tpl/api.tpl"
+	tpl := Setting.Boot + "/pkg/tpl/api.tpl"
 	bytes, err := util.ReadAll(tpl)
 	if err != nil {
 		return "", err

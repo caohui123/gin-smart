@@ -18,6 +18,6 @@ func CommonMiddleware(c *gin.Context) {
 	}
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Content-Type", "application/json; charset=utf-8")
-	c.Header("Start-Info", fmt.Sprintf("%s,%s,%s", app.MainStartInfo.BuildVersion, app.MainStartInfo.BuildAt, time.Now().Format(app.TimeFormatFullDate)))
+	c.Header("Start-Info", fmt.Sprintf("%s,%s,%s", app.Setting.BuildVersion, app.Setting.BuildAt, time.Now().Format(app.TimeFormatFullDate)))
 	c.Next()
 }

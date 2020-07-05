@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jangozw/gin-smart/pkg/app"
 	"github.com/jangozw/go-api-facility/auth"
 	"github.com/sirupsen/logrus"
-	"github.com/jangozw/gin-smart/pkg/app"
 )
 
 func LogToFile() gin.HandlerFunc {
@@ -27,7 +27,7 @@ func LogToFile() gin.HandlerFunc {
 			var uid string
 			token := c.GetHeader(TokenHeaderKey)
 			if token != "" {
-				if payload, err := auth.ParseJwtToken(token, app.Runner.Conf.JwtSecret()); err == nil {
+				if payload, err := auth.ParseJwtToken(token, app.Runner.Cfg.Encrypt.JwtSecret); err == nil {
 					uid = payload.AccountID
 				}
 			}
@@ -42,7 +42,7 @@ func LogToFile() gin.HandlerFunc {
 			// uri := strings.ReplaceAll(c.Request.URL.RequestURI(), "\\u0026", "&")
 			uri := c.Request.URL.RequestURI()
 			// log 里有json.Marshal() 导致url转义字符
-			app.Runner.Log.WithFields(logrus.Fields{
+			app.Runner.Log.Api.WithFields(logrus.Fields{
 				"uid":      uid,
 				"query":    query,
 				"response": resp,

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jangozw/go-api-facility/auth"
 	"github.com/jangozw/gin-smart/pkg/util"
+	"github.com/jangozw/go-api-facility/auth"
 
 	"github.com/jangozw/gin-smart/pkg/app"
 )
@@ -25,11 +25,11 @@ func (j *JwtUserLogin) Pwd() string {
 }
 
 func (j *JwtUserLogin) JwtSecret() string {
-	return app.Runner.Conf.JwtSecret()
+	return app.Runner.Cfg.Encrypt.JwtSecret
 }
 
 func (j *JwtUserLogin) ExpireSeconds() int64 {
-	return app.Runner.Conf.GetTokenExpireSeconds()
+	return int64(app.Runner.Cfg.General.TokenExpireSeconds)
 }
 
 func (j *JwtUserLogin) Issuer() string {
@@ -71,7 +71,7 @@ func (j *JwtUserVerify) SetToken(token string) {
 }
 
 func (j *JwtUserVerify) JwtSecret() string {
-	return app.Runner.Conf.JwtSecret()
+	return app.Runner.Cfg.Encrypt.JwtSecret
 }
 
 // 可以不验证，直接返回nil, 或者从缓存，数据验证

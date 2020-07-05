@@ -53,13 +53,10 @@ func SampleFindUserByMobile(mobile string) (user SampleUser, err error) {
 	}
 	return user, nil
 }
-
 func SampleMakeUserPwd(input string) string {
-	aesSecret, _ := app.Runner.Conf.Get("encrypt", "aes_secret")
-	return util.Sha256(input + aesSecret)
+	return util.Sha256(input + "")
 }
 
 func (m *SampleUser) CheckPwd(input string) bool {
-	aesSecret, _ := app.Runner.Conf.Get("encrypt", "aes_secret")
-	return m.Password == util.Sha256(input+aesSecret)
+	return m.Password == util.Sha256(input+"")
 }

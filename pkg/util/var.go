@@ -2,6 +2,24 @@ package util
 
 import "strconv"
 
+type StringNumber string
+
+func (s *StringNumber) Int64() int64 {
+	str := string(*s)
+	i, _ := strconv.ParseInt(str, 10, 64)
+	return i
+}
+
+func (s *StringNumber) Int() int {
+	str := string(*s)
+	i, _ := strconv.Atoi(str)
+	return i
+}
+
+func (s *StringNumber) Uint() uint {
+	return uint(s.Int())
+}
+
 func Int64ToInt(id64 int64) int {
 	strInt64 := strconv.FormatInt(id64, 10)
 	id16, _ := strconv.Atoi(strInt64)

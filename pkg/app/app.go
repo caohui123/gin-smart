@@ -1,8 +1,9 @@
 package app
 
 import (
+	"flag"
 	"fmt"
-	"strconv"
+	"os"
 )
 
 const (
@@ -12,24 +13,6 @@ const (
 	EnvTest            = "test"
 	EnvProduction      = "production"
 )
-
-type StringNumber string
-
-func (s *StringNumber) Int64() int64 {
-	str := string(*s)
-	i, _ := strconv.ParseInt(str, 10, 64)
-	return i
-}
-
-func (s *StringNumber) Int() int {
-	str := string(*s)
-	i, _ := strconv.Atoi(str)
-	return i
-}
-
-func (s *StringNumber) Uint() uint {
-	return uint(s.Int())
-}
 
 type TriggerIF interface {
 	Do()
@@ -49,4 +32,37 @@ func PrintConsole(value interface{}) {
 		content = fmt.Sprintf("%v", value)
 	}
 	fmt.Println("---console---", content)
+}
+
+// 控制台参数
+type StarArgs struct {
+	config string
+}
+
+//
+func GetStartArgs() StarArgs {
+	// 配置文件路径，取命令行config参数作为路径
+	configFile := getConfigFile()
+	cmdArgsConfig := flag.String("config", configFile, "config file path, default: "+configFile)
+	flag.Parse()
+	if cmdArgsConfig != nil {
+		configFile = *cmdArgsConfig
+	}
+	return StarArgs{
+		config: configFile,
+	}
+}
+
+func BootPath() string {
+	str, _ := os.Getwd()
+	return str
+}
+
+func mustBootInProjectRoot() {
+	file := BootPath() + "/go.mod"
+	if ok, err := IsPathExists(file); err != nil {
+		panic("check go.mod exists err: " + err.Error())
+	} else if !ok {
+		panic(file + " not found, please boot in project root dir")
+	}
 }

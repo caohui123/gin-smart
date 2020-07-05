@@ -18,8 +18,8 @@ func IsEnvProduction() bool {
 }
 
 func CurrentEnv() string {
-	if Runner != nil && Runner.Conf != nil {
-		return Runner.Conf.Env()
+	if Runner != nil {
+		return Runner.Cfg.Env.Env
 	}
 	return ""
 }

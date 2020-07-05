@@ -1,10 +1,8 @@
 package app
 
 const (
-	URLParamPage     = "page"
-	URLParamPageSize = "page_size"
-	MaxPageSize      = 200
-	DefaultPageSize  = 20
+	MaxPageSize     = 200
+	DefaultPageSize = 20
 )
 
 type paramsCheck interface {

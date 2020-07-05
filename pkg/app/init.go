@@ -1,6 +1,9 @@
 package app
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 const (
 	errCodeSuccess             = 200
@@ -18,18 +21,19 @@ var innerErrCodeMap = map[int]string{
 	errCodeNotSetRouteHandler:  "路由没有绑定实例",
 }
 
-type Setting struct {
-	ErrCodeMap map[int]string
+type SettingFields struct {
+	ErrCodeMap   map[int]string
+	Boot         string
+	BuildAt      string
+	StartAt      time.Time
+	BuildVersion string
+	StartArgs    StarArgs
 }
 
-var appSetting Setting
-
-func InitSetting(s Setting) {
-	appSetting = s
-}
+var Setting SettingFields
 
 func getCodeMsg(code int) string {
-	if v, ok := appSetting.ErrCodeMap[code]; ok {
+	if v, ok := Setting.ErrCodeMap[code]; ok {
 		return v
 	}
 	if v, ok := innerErrCodeMap[code]; ok {

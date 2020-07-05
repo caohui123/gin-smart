@@ -1,12 +1,12 @@
 package sample
 
 import (
-	"github.com/jangozw/go-api-facility/auth"
 	"github.com/jangozw/gin-smart/errcode"
 	"github.com/jangozw/gin-smart/model"
 	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/app"
 	"github.com/jangozw/gin-smart/service"
+	"github.com/jangozw/go-api-facility/auth"
 )
 
 //login api

@@ -1,13 +1,14 @@
 package middleware
 
 import (
+	"github.com/jangozw/gin-smart/pkg/util"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/errcode"
 
-	"github.com/jangozw/go-api-facility/auth"
 	"github.com/jangozw/gin-smart/pkg/app"
+	"github.com/jangozw/go-api-facility/auth"
 )
 
 // header 中 token key
@@ -38,7 +39,7 @@ func appLoginUser(accountInfo auth.AccountInfo, detail interface{}) app.LoginUse
 	// extra
 	// 从 accountInfo.AccountExtra， 或 detail 里得到 extra信息，都是调用时候根据业务场景自定义的
 	// accountInfo.AccountExtra 是在login时候自定义， detail 是在验证token 成功后回调的自定义数据
-	accountID := app.StringNumber(accountInfo.AccountID)
+	accountID := util.StringNumber(accountInfo.AccountID)
 	return app.LoginUser{
 		ID:    accountID.Uint(),
 		Extra: detail,

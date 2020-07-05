@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # echo $'machine gitlab.gosccap.cn\nlogin shanwen.zhang\npassword tdPXpZwqTswkoA_z6_oa' > ~/.netrc
-go env -w GOPRIVATE=gitlab.gosccap.cn
+# go env -w GOPRIVATE=gitlab.gosccap.cn
 
 
 projectRoot=`pwd`
 
 # 二进制名称
-binaryName=gos_avian_api
+binaryName=gin-smart
 
 # 运行的日志
 log="${binaryName}.run.log"

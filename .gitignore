@@ -7,3 +7,5 @@ gormt
 .vscode
 *.log
 bin
+logs
+

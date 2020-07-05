@@ -1,5 +1,5 @@
 variables:
-  PROJECT_ROOT: /web/avian
+  PROJECT_ROOT: /web/gin-smart
 
 stages:
   - checkfmt
@@ -14,7 +14,7 @@ checkfmt:
   script:
     - make checkgofmt
   tags:
-    - avian_fmt
+    - ginsmart_fmt
   
 deploytest:
   stage: deploytest
@@ -26,7 +26,7 @@ deploytest:
     - make checkgofmt
     - ./run.sh restart
   tags:
-    - avian_deploy
+    - ginsmart_deploy
   only:
     - test
   except:

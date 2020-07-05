@@ -5,10 +5,10 @@ import (
 )
 
 type Route struct {
-	Group       string
-	Method      string
-	Path        string
-	Handler     ApiInstanceFunc
+	Group  string
+	Method string
+	Path   string
+	// Handler     ApiInstanceFunc
 	HandlerFunc ApiHandlerFunc
 }
 
@@ -23,7 +23,7 @@ type RouteGroup struct {
 }
 
 // 通过对象实例处理请求
-type ApiInstanceFunc func() ApiIF
+// type ApiInstanceFunc func() ApiIF
 
 // 直接func 处理请求
 type ApiHandlerFunc func(c *Context) Err
@@ -32,57 +32,57 @@ type ApiHandlerFunc func(c *Context) Err
 	g.Routes[len(g.Routes)-1].HandlerInstance = instance
 }*/
 
-func (g *RouteGroup) HandlerFunc(fu ApiHandlerFunc) {
+/*func (g *RouteGroup) HandlerFunc(fu ApiHandlerFunc) {
 	g.Routes[len(g.Routes)-1].HandlerFunc = fu
 }
 
 func (g *RouteGroup) Handler(fu ApiInstanceFunc) {
 	g.Routes[len(g.Routes)-1].Handler = fu
-}
+}*/
 
 func (g *RouteGroup) Use(mid ...gin.HandlerFunc) *RouteGroup {
 	g.Middleware = append(g.Middleware, mid...)
 	return g
 }
 
-func (g *RouteGroup) GET(path string) *RouteGroup {
-	item := Route{Group: g.Name, Method: "GET", Path: path}
+func (g *RouteGroup) GET(path string, handler ApiHandlerFunc) *RouteGroup {
+	item := Route{Group: g.Name, Method: "GET", Path: path, HandlerFunc: handler}
 	g.Routes = append(g.Routes, item)
 	return g
 }
 
-func (g *RouteGroup) POST(path string) *RouteGroup {
-	item := Route{Group: g.Name, Method: "POST", Path: path}
+func (g *RouteGroup) POST(path string, handler ApiHandlerFunc) *RouteGroup {
+	item := Route{Group: g.Name, Method: "POST", Path: path, HandlerFunc: handler}
 	g.Routes = append(g.Routes, item)
 	return g
 }
 
-func (g *RouteGroup) PUT(path string) *RouteGroup {
-	item := Route{Group: g.Name, Method: "PUT", Path: path}
+func (g *RouteGroup) PUT(path string, handler ApiHandlerFunc) *RouteGroup {
+	item := Route{Group: g.Name, Method: "PUT", Path: path, HandlerFunc: handler}
 	g.Routes = append(g.Routes, item)
 	return g
 }
 
-func (g *RouteGroup) Any(path string) *RouteGroup {
-	item := Route{Group: g.Name, Method: "Any", Path: path}
+func (g *RouteGroup) Any(path string, handler ApiHandlerFunc) *RouteGroup {
+	item := Route{Group: g.Name, Method: "Any", Path: path, HandlerFunc: handler}
 	g.Routes = append(g.Routes, item)
 	return g
 }
 
-func (g *RouteGroup) DELETE(path string) *RouteGroup {
-	item := Route{Group: g.Name, Method: "DELETE", Path: path}
+func (g *RouteGroup) DELETE(path string, handler ApiHandlerFunc) *RouteGroup {
+	item := Route{Group: g.Name, Method: "DELETE", Path: path, HandlerFunc: handler}
 	g.Routes = append(g.Routes, item)
 	return g
 }
 
-func (g *RouteGroup) PATCH(path string) *RouteGroup {
-	item := Route{Group: g.Name, Method: "PATCH", Path: path}
+func (g *RouteGroup) PATCH(path string, handler ApiHandlerFunc) *RouteGroup {
+	item := Route{Group: g.Name, Method: "PATCH", Path: path, HandlerFunc: handler}
 	g.Routes = append(g.Routes, item)
 	return g
 }
 
-func (g *RouteGroup) OPTIONS(path string) *RouteGroup {
-	item := Route{Group: g.Name, Method: "OPTIONS", Path: path}
+func (g *RouteGroup) OPTIONS(path string, handler ApiHandlerFunc) *RouteGroup {
+	item := Route{Group: g.Name, Method: "OPTIONS", Path: path, HandlerFunc: handler}
 	g.Routes = append(g.Routes, item)
 	return g
 }

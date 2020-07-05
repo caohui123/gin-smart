@@ -1,5 +1,5 @@
 # This how we want to name the binary output
-BINARY=avian
+BINARY=gin-smart
 BIN_PATH=bin
 MAIN_FILE=cmd/app/main.go
 # These are the values we want to pass for VERSION  and BUILD
@@ -13,7 +13,7 @@ build:
 # build windows
 build-win:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build  ${LDFLAGS} -o ${BINPATH}/${BINARY}.exe ${MAIN_FILE}
-#build linux
+# build linux
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ${LDFLAGS} -o ${BINPATH}/${BINARY} ${MAIN_FILE}
 # docker build (see docker-build.md)

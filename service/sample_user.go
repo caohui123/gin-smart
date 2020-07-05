@@ -35,7 +35,7 @@ func refreshUserToken(userID int64, token string) (err error) {
 	if err = app.Runner.Db.Model(&model.SampleUserToken{}).Where("user_id=?", userID).First(&userToken).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
-	expSeconds := app.Runner.Conf.GetTokenExpireSeconds()
+	expSeconds := int64(app.Runner.Cfg.General.TokenExpireSeconds)
 	if userToken.ID == 0 {
 		data := model.SampleUserToken{
 			UserID:    userID,
