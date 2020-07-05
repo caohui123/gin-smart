@@ -2,8 +2,7 @@ package model
 
 import (
 	"errors"
-
-	"gorm.io/gorm"
+	"github.com/jinzhu/gorm"
 
 	"github.com/jangozw/gin-smart/pkg/app"
 	"github.com/jangozw/gin-smart/pkg/util"

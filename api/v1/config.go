@@ -1,13 +1,17 @@
 package v1
 
-import "github.com/jangozw/gin-smart/pkg/app"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/jangozw/gin-smart/pkg/app"
+)
 
 // 全局配置
-func Config(c *app.Context) app.Err {
+func Config(c *gin.Context){
+	ctx := app.Ctx(c)
 	data := map[string]interface{}{
 		"title":  "global config",
 		"detail": "xxx",
 	}
-	c.Output(data)
-	return nil
+	ctx.Success(data)
+	return
 }
