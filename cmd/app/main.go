@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/jangozw/gin-smart/errcode"
 	"os"
@@ -28,10 +29,10 @@ func before() {
 	}
 	// 注册运行依赖的资源,db,redis等
 	if err := app.NewRunner(); err != nil {
-		fmt.Println("Exit! app setup runner failed: ", err.Error())
+		fmt.Println("Exit! setup app.Runner failed: ", err.Error())
 		os.Exit(1)
 	}
-	fmt.Println("init main ok, --current env:", app.CurrentEnv(), "--boot at:", app.BootPath())
+	printInitInfo()
 }
 
 func main() {
@@ -41,6 +42,19 @@ func main() {
 	// 注册路由
 	route.Register(engine)
 	if err := engine.Run(fmt.Sprintf(":%d", app.Runner.Cfg.Server.Listen)); err != nil {
-		panic(err)
+		fmt.Println("Exit! setup web server failed: ", err.Error())
+		os.Exit(1)
 	}
+}
+
+func printInitInfo()  {
+	var info = map[string]string{
+		"AppEnv":app.CurrentEnv(),
+		"Build": app.Setting.BuildVersion+`@`+app.Setting.BuildAt,
+		"Config":app.GetConfigFile(),
+		"LogDir":app.Runner.Cfg.Log.LogDir,
+		"BootAt":app.BootPath(),
+	}
+	by,_:= json.Marshal(info)
+	fmt.Println("App init completely! ", string(by))
 }

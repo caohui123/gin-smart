@@ -37,7 +37,7 @@ type BootArgs struct {
 //
 func GetBootArgs() BootArgs {
 	// 配置文件路径，取命令行config参数作为路径
-	configFile := getConfigFile()
+	configFile := GetConfigFile()
 	cmdArgsConfig := flag.String("config", configFile, "config file path, default: "+configFile)
 	flag.Parse()
 	if cmdArgsConfig != nil {

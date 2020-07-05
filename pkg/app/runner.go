@@ -41,7 +41,7 @@ type runner struct {
 func (s *runner) loadCfg() error {
 	if s.Cfg == nil {
 		cfg := Config{}
-		if err := lib.NewCfg(getConfigFile(), &cfg); err != nil {
+		if err := lib.NewCfg(GetConfigFile(), &cfg); err != nil {
 			return err
 		} else if err := cfg.Check(); err != nil {
 			return err
@@ -109,7 +109,7 @@ func (s *runner) loadLog() error {
 }
 
 // 获取配置文件，启动参数指定的优先
-func getConfigFile() string {
+func GetConfigFile() string {
 	file := Setting.BootArgs.Config
 	if file == "" {
 		file = BootPath() + `/config.ini`
