@@ -51,12 +51,9 @@ type Context struct {
 	recordsCount uint
 }
 
-
 func Ctx(c *gin.Context) *Context {
 	return &Context{Context: c}
 }
-
-
 
 // 展示分页
 func (c *Context) Pager() *Pager {
@@ -136,6 +133,7 @@ func (c *Context) adjustOutput(data interface{}) interface{} {
 	}
 	return data
 }
+
 // 输出结构展示分页
 func (c *Context) SetPager(count uint) {
 	c.recordsCount = count

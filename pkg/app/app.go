@@ -14,8 +14,8 @@ const (
 	EnvTest            = "test"
 	EnvProduction      = "production"
 )
-var Setting SettingFields
 
+var Setting SettingFields
 
 type paramsCheck interface {
 	Check() error
@@ -61,7 +61,6 @@ type SettingFields struct {
 	BuildVersion   string
 	BootArgs       BootArgs
 }
-
 
 func getCodeMsg(code int) string {
 	if v, ok := Setting.ErrCodeMap[code]; ok {

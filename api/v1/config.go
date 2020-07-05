@@ -6,7 +6,7 @@ import (
 )
 
 // 全局配置
-func Config(c *gin.Context){
+func Config(c *gin.Context) {
 	ctx := app.Ctx(c)
 	data := map[string]interface{}{
 		"title":  "global config",

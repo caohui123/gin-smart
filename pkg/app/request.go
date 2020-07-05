@@ -1,8 +1,5 @@
 package app
 
-
-
-
 // 有用
 type PagerIF interface {
 	SetPager(page uint, pageSize, total uint64)

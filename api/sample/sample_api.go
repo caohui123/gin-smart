@@ -12,7 +12,7 @@ import (
 
 // login api
 
-func SampleLogin(c *gin.Context)  {
+func SampleLogin(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var p param.LoginRequest
 	if err := ctx.ShouldBind(&p); err != nil {
@@ -32,7 +32,7 @@ func SampleLogin(c *gin.Context)  {
 }
 
 // logout api
-func SampleLogout(c *gin.Context)  {
+func SampleLogout(c *gin.Context) {
 	ctx := app.Ctx(c)
 	userId := ctx.LoginUser().ID
 	if err := service.AppLogout(int64(userId)); err != nil {
@@ -43,7 +43,7 @@ func SampleLogout(c *gin.Context)  {
 }
 
 // 添加用户
-func SampleAddUser(c *gin.Context)  {
+func SampleAddUser(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var input param.UserAddRequest
 	if err := ctx.BindInput(&input); err != nil {
@@ -63,7 +63,7 @@ func SampleAddUser(c *gin.Context)  {
 }
 
 // 用户列表，有分页
-func SampleUserList(c *gin.Context)  {
+func SampleUserList(c *gin.Context) {
 	ctx := app.Ctx(c)
 	// 校验请求参数, 校验规则定义在params.SearchUserList{}的tag里
 	search := param.UserListRequest{}
@@ -88,7 +88,7 @@ func SampleUserList(c *gin.Context)  {
 }
 
 // 用户详情
-func SampleUserDetail(c *gin.Context)  {
+func SampleUserDetail(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var input param.UserDetailRequest
 	if err := ctx.BindInput(&input); err != nil {
@@ -111,7 +111,7 @@ func SampleUserDetail(c *gin.Context)  {
 }
 
 // 修改的自己的密码
-func SampleUserModifyPwd(c *gin.Context)  {
+func SampleUserModifyPwd(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var input param.UserModifyPwdRequest
 	if err := ctx.BindInput(&input); err != nil {
@@ -132,7 +132,7 @@ func SampleUserModifyPwd(c *gin.Context)  {
 }
 
 // 用户列表
-func SampleUser(c *gin.Context)  {
+func SampleUser(c *gin.Context) {
 	ctx := app.Ctx(c)
 
 	// 验证请求参数

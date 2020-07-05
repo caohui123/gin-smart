@@ -47,14 +47,14 @@ func main() {
 	}
 }
 
-func printInitInfo()  {
+func printInitInfo() {
 	var info = map[string]string{
-		"AppEnv":app.CurrentEnv(),
-		"Build": app.Setting.BuildVersion+`@`+app.Setting.BuildAt,
-		"Config":app.GetConfigFile(),
-		"LogDir":app.Runner.Cfg.Log.LogDir,
-		"BootAt":app.BootPath(),
+		"AppEnv": app.CurrentEnv(),
+		"Build":  app.Setting.BuildVersion + `@` + app.Setting.BuildAt,
+		"Config": app.GetConfigFile(),
+		"LogDir": app.Runner.Cfg.Log.LogDir,
+		"BootAt": app.BootPath(),
 	}
-	by,_:= json.Marshal(info)
+	by, _ := json.Marshal(info)
 	fmt.Println("App init completely! ", string(by))
 }
