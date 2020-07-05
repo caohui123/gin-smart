@@ -12,8 +12,8 @@ type Config struct {
 	} `json:"log"`
 
 	General struct {
-		DefaultPageSize    int `json:"default_page_size"`
-		MaxPageSize        int `json:"max_page_size"`
+		DefaultPageSize    uint `json:"default_page_size"`
+		MaxPageSize        uint `json:"max_page_size"`
 		TokenExpireSeconds int `json:"token_expire_seconds"`
 	} `json:"general"`
 

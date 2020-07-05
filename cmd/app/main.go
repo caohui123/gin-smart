@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/jangozw/gin-smart/errcode"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,16 +19,19 @@ var (
 
 func before() {
 	app.Setting = app.SettingFields{
-		StartArgs:    app.GetStartArgs(),
-		BuildVersion: BuildVersion,
-		BuildAt:      BuildAt,
-		StartAt:      time.Now(),
+		BootArgs:       app.GetBootArgs(),
+		BuildVersion:   BuildVersion,
+		BuildAt:        BuildAt,
+		StartAt:        time.Now(),
+		ErrCodeMap:     errcode.CodeMap(),
+		ErrCodeSuccess: errcode.Success,
 	}
 	// 注册运行依赖的资源,db,redis等
 	if err := app.NewRunner(); err != nil {
-		panic("App start failed : " + err.Error())
+		fmt.Println("Exit! app setup runner failed: ", err.Error())
+		os.Exit(1)
 	}
-	fmt.Println("init main ok, --current env:", app.CurrentEnv(), "--boot root:", app.BootPath())
+	fmt.Println("init main ok, --current env:", app.CurrentEnv(), "--boot at:", app.BootPath())
 }
 
 func main() {

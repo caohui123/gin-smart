@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+
 	"gorm.io/gorm"
 
 	"github.com/jangozw/gin-smart/pkg/app"
@@ -53,6 +54,7 @@ func SampleFindUserByMobile(mobile string) (user SampleUser, err error) {
 	}
 	return user, nil
 }
+
 func SampleMakeUserPwd(input string) string {
 	return util.Sha256(input + "")
 }

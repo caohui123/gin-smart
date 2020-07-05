@@ -1,12 +1,11 @@
 package app
 
 import (
-	"fmt"
 	"time"
 )
 
 // api 接口响应结果
-type Response struct {
+type response struct {
 	Code      int         `json:"code"`
 	Msg       string      `json:"msg"`
 	Timestamp int64       `json:"timestamp"`
@@ -14,43 +13,28 @@ type Response struct {
 }
 
 // 返回成功， 有数据
-func ResponseSuccess(data interface{}) *Response {
-	return ResponseWithCode(nil, data)
-}
-
-// 返回成功，不带数据，通用型
-func ResponseSuccessSimple() *Response {
-	return ResponseWithCode(nil, struct{}{})
+func ResponseSuccess(data interface{}) *response {
+	return Response(nil, data)
 }
 
 // 返回错误， 带错误信息
-func ResponseFail(err Err) *Response {
-	return ResponseWithCode(err, struct{}{})
+func ResponseFail(err Err) *response {
+	return Response(err, struct{}{})
 }
 
-// 返回错误， 通用型
-func ResponseFailByMsg(msg string, args ...interface{}) *Response {
-	err := Error(errCodeFail, fmt.Sprintf(msg, args...))
-	return ResponseWithCode(err, struct{}{})
+func ResponseFailByCode(code int) *response {
+	return Response(Error(code), struct{}{})
 }
 
-func ResponseFailByCode(code int) *Response {
-	return ResponseWithCode(CodeErr(code), struct{}{})
-}
-
-func ResponseWithCode(err Err, data interface{}) *Response {
-	// 没有错误就是成功返回
+func Response(err Err, data interface{}) *response {
 	if err == nil {
-		err = CodeErr(errCodeSuccess)
+		err = Error(Setting.ErrCodeSuccess)
 	}
-	errMsg := err.ErrMsg()
-	codMsg := getCodeMsg(err.Code())
+	errMsg := err.Msg()
 	if errMsg == "" {
-		errMsg = codMsg
-	} else if err.Code() != errCodeFail {
-		errMsg = codMsg + ":" + errMsg
+		errMsg = getCodeMsg(err.Code())
 	}
-	return &Response{
+	return &response{
 		err.Code(),
 		errMsg,
 		time.Now().Unix(),

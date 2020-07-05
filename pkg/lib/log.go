@@ -70,7 +70,7 @@ func setRequestLog(logDir string) (*logrus.Logger, error) {
 		// PrettyPrint: true,
 
 	}
-	//formatter := &logrus.TextFormatter{
+	// formatter := &logrus.TextFormatter{
 	//	TimestampFormat: consts.TimeLayoutYmdHis,
 	//}
 	lfHook := lfshook.NewHook(writeMap, formatter)
@@ -112,7 +112,7 @@ func setSqlLog(logDir string) (*logrus.Logger, error) {
 		// PrettyPrint: true,
 
 	}
-	//formatter := &logrus.TextFormatter{
+	// formatter := &logrus.TextFormatter{
 	//	TimestampFormat: consts.TimeLayoutYmdHis,
 	//}
 	lfHook := lfshook.NewHook(writeMap, formatter)

@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"github.com/jangozw/gin-smart/pkg/util"
 	"net/http"
+
+	"github.com/jangozw/gin-smart/pkg/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/errcode"

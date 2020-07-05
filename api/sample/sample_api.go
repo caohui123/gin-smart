@@ -9,7 +9,7 @@ import (
 	"github.com/jangozw/go-api-facility/auth"
 )
 
-//login api
+// login api
 
 func SampleLogin(c *app.Context) app.Err {
 	var p param.LoginRequest
@@ -28,7 +28,7 @@ func SampleLogin(c *app.Context) app.Err {
 	return nil
 }
 
-//logout api
+// logout api
 func SampleLogout(c *app.Context) app.Err {
 	userId := c.LoginUser.ID
 	if err := service.AppLogout(int64(userId)); err != nil {
@@ -57,12 +57,12 @@ func SampleAddUser(c *app.Context) app.Err {
 
 // 用户列表，有分页
 func SampleUserList(c *app.Context) app.Err {
-	//校验请求参数, 校验规则定义在params.SearchUserList{}的tag里
+	// 校验请求参数, 校验规则定义在params.SearchUserList{}的tag里
 	search := param.UserListRequest{}
 	if err := c.BindInput(&search); err != nil {
 		return err
 	}
-	//校验参数成功后自动赋值给结构体
+	// 校验参数成功后自动赋值给结构体
 	if users, err := service.SampleGetUserList(search, c.Pager); err != nil {
 		return app.Error(errcode.Failed, "get user list err: %s", err.Error())
 	} else {
@@ -112,7 +112,6 @@ func SampleUserModifyPwd(c *app.Context) app.Err {
 	// 修改密码
 	// 。。。
 	return nil
-
 }
 
 // 用户列表

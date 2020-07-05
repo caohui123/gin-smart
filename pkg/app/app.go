@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 const (
@@ -13,7 +14,12 @@ const (
 	EnvTest            = "test"
 	EnvProduction      = "production"
 )
+var Setting SettingFields
 
+
+type paramsCheck interface {
+	Check() error
+}
 type TriggerIF interface {
 	Do()
 }
@@ -23,24 +29,13 @@ func Trigger(tg TriggerIF) {
 	go tg.Do()
 }
 
-func PrintConsole(value interface{}) {
-	var content string
-	if err, ok := value.(error); ok {
-		content = err.Error()
-	}
-	if content == "" {
-		content = fmt.Sprintf("%v", value)
-	}
-	fmt.Println("---console---", content)
-}
-
 // 控制台参数
-type StarArgs struct {
-	config string
+type BootArgs struct {
+	Config string
 }
 
 //
-func GetStartArgs() StarArgs {
+func GetBootArgs() BootArgs {
 	// 配置文件路径，取命令行config参数作为路径
 	configFile := getConfigFile()
 	cmdArgsConfig := flag.String("config", configFile, "config file path, default: "+configFile)
@@ -48,8 +43,8 @@ func GetStartArgs() StarArgs {
 	if cmdArgsConfig != nil {
 		configFile = *cmdArgsConfig
 	}
-	return StarArgs{
-		config: configFile,
+	return BootArgs{
+		Config: configFile,
 	}
 }
 
@@ -58,11 +53,43 @@ func BootPath() string {
 	return str
 }
 
-func mustBootInProjectRoot() {
-	file := BootPath() + "/go.mod"
-	if ok, err := IsPathExists(file); err != nil {
-		panic("check go.mod exists err: " + err.Error())
-	} else if !ok {
-		panic(file + " not found, please boot in project root dir")
+type SettingFields struct {
+	ErrCodeMap     map[int]string
+	ErrCodeSuccess int
+	BuildAt        string
+	StartAt        time.Time
+	BuildVersion   string
+	BootArgs       BootArgs
+}
+
+
+func getCodeMsg(code int) string {
+	if v, ok := Setting.ErrCodeMap[code]; ok {
+		return v
 	}
+	return fmt.Sprintf("unknown code:%d", code)
+}
+
+// 环境
+func IsEnvLocal() bool {
+	return CurrentEnv() == EnvLocal
+}
+
+func IsEnvDev() bool {
+	return CurrentEnv() == EnvDev
+}
+
+func IsEnvTest() bool {
+	return CurrentEnv() == EnvTest
+}
+
+func IsEnvProduction() bool {
+	return CurrentEnv() == EnvProduction
+}
+
+func CurrentEnv() string {
+	if Runner != nil {
+		return Runner.Cfg.Env.Env
+	}
+	return ""
 }

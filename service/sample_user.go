@@ -3,11 +3,12 @@ package service
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jangozw/gin-smart/model"
 	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/app"
 	"gorm.io/gorm"
-	"time"
 )
 
 const RedisKeyLoginUser = "login_user_token_"

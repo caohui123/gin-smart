@@ -11,9 +11,12 @@ var Runner *runner
 
 // 运行加载的实例
 func NewRunner() error {
+	if Runner != nil {
+		return nil
+	}
 	Runner = &runner{}
 	// 要加载的运行服务
-	var runnerLoads = []func() error{
+	runnerLoads := []func() error{
 		Runner.loadCfg,
 		Runner.loadLog,
 		Runner.loadDb,
@@ -37,15 +40,17 @@ type runner struct {
 
 func (s *runner) loadCfg() error {
 	if s.Cfg == nil {
-		cfg := &Config{}
-		if err := lib.NewCfg(getConfigFile(), cfg); err != nil {
+		cfg := Config{}
+		if err := lib.NewCfg(getConfigFile(), &cfg); err != nil {
 			return err
-		} else {
-			s.Cfg = cfg
+		} else if err := cfg.Check(); err != nil {
+			return err
 		}
+		s.Cfg = &cfg
 	}
 	return nil
 }
+
 func (s *runner) loadDb() error {
 	if err := s.loadCfg(); err != nil {
 		return nil
@@ -105,7 +110,7 @@ func (s *runner) loadLog() error {
 
 // 获取配置文件，启动参数指定的优先
 func getConfigFile() string {
-	file := Setting.StartArgs.config
+	file := Setting.BootArgs.Config
 	if file == "" {
 		file = BootPath() + `/config.ini`
 	}

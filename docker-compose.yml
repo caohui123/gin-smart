@@ -1,5 +1,4 @@
 #
-# dockerize 用来做服务先后启动顺序的, 这里main程序要等到redis, mysql 起来后才能启动
 # ${xx}定义在.env 中
 #
 version: '3'

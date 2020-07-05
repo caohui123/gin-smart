@@ -3,25 +3,19 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"reflect"
-	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 const (
 	CtxKeyLoginUser = "ctx-login-user"
 	CtxKeyNeedLogin = "ctx-need-login"
+	CtxKeyResponse  = "ctx-response"
 )
 
-// const CtxKeyLoginUserID = "ctx-login-user-id"
-const CtxKeyResponse = "ctx-response"
-
 var (
-	inputTypeErr  = errors.New("input 必须是一个结构体变量的地址")
-	outputTypeErr = errors.New("output 必须是一个地址")
+	inputTypeErr = errors.New("input 必须是一个结构体变量的地址")
 )
 
 // 登陆用户接口
@@ -48,150 +42,104 @@ func (l *LoginUser) ExtraTo(info interface{}) error {
 	return json.Unmarshal(bytes, info)
 }
 
-// 请求上下文, 基于 gin.Context
-type baseContext struct {
-	*gin.Context
-}
-
 // 用户api 请求
 type Context struct {
-	baseContext
-	apiSetting ctxApiSetting
-	Pager      Pager
-	LoginUser  LoginUser
+	*gin.Context
+	pager        *Pager
+	loginUser    *LoginUser
+	outputPager  bool
+	recordsCount uint
 }
 
-type ctxApiSetting struct {
-	bindInput      interface{}
-	bindOutput     interface{}
-	route          Route
-	outputPager    bool
-	outputWithCode bool
-	recordsCount   uint64
+
+func Ctx(c *gin.Context) *Context {
+	return &Context{Context: c}
 }
 
-// 分页请求展示结果
-type pagerResponse struct {
-	Pager pagerResp   `json:"pager"`
-	List  interface{} `json:"list"`
-}
 
-// 用户api类型
-// type APIHandlerFunc func(c *Context)
-
-func APIHandler(route Route) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// 新建ctx
-		ctx, err := newCtx(c, route)
-		if err != nil {
-			c.JSON(http.StatusOK, ResponseFail(err))
-			return
-		}
-		if route.HandlerFunc == nil {
-			c.JSON(http.StatusOK, ResponseFailByCode(errCodeNotSetRouteHandler))
-			return
-		}
-		if err := route.HandlerFunc(ctx); err != nil {
-			c.JSON(http.StatusOK, ResponseFail(err))
-			return
-		}
-		// 到这里都是请求成功的
-		// 根据情形调整output
-		ctx.adjustOutput()
-		var result interface{}
-		if ctx.apiSetting.outputWithCode != true {
-			result = ctx.apiSetting.bindOutput
-		} else {
-			result = ctx.Success(ctx.apiSetting.bindOutput)
-		}
-		// 设置输出结果用于日志记录
-		c.Set(CtxKeyResponse, result)
-		c.JSON(http.StatusOK, result)
-		return
-	}
-}
-
-// 新 context
-func newCtx(c *gin.Context, ro Route) (*Context, Err) {
-	/******* 对于需要登陆情况检查登陆 ******/
-	var loginUser LoginUser
-	if c.GetBool(CtxKeyNeedLogin) == true {
-		if obj, exists := c.Get(CtxKeyLoginUser); exists {
-			loginUser = obj.(LoginUser)
-		}
-		if loginUser.ID == 0 {
-			return nil, Error(errCodeInvalidLoginUser, "用户id无效0")
-		}
-	}
-	// 根据路由自动判断是否是分页请求，如果是则返回结果自动加上pager
-	var outputPager bool
-	if ro.Method == "GET" && strings.HasSuffix(ro.Path, "list") {
-		outputPager = true
-	}
-	var pager Pager
-	if ro.Method == "GET" {
-		if strings.HasSuffix(ro.Path, "list") {
-			outputPager = true
-		}
-		c.ShouldBind(&pager)
-		// 通用参数
-		pager = NewPageRequest(pager.Page, pager.PageSize)
-	}
-	ctx := &Context{
-		baseContext: baseContext{c},
-		Pager:       pager,
-		LoginUser:   loginUser,
-		apiSetting: ctxApiSetting{
-			route:          ro,
-			bindInput:      nil,
-			bindOutput:     nil,
-			outputPager:    outputPager,
-			recordsCount:   0,
-			outputWithCode: true,
-		},
-	}
-	return ctx, nil
-}
-
-func (c *Context) adjustOutput() {
-	// 如果是分页请求,改变下返回结构
-	if c.apiSetting.outputPager == true {
-		c.apiSetting.bindOutput = pagerResponse{
-			Pager: pagerResp{
-				Page:     c.Pager.Page,
-				PageSize: c.Pager.PageSize,
-				Total:    c.apiSetting.recordsCount,
-			},
-			List: c.apiSetting.bindOutput,
-		}
-	}
-}
 
 // 展示分页
-func (c *Context) PagerOn(count uint64) {
-	c.apiSetting.outputPager = true
-	c.apiSetting.recordsCount = count
+func (c *Context) Pager() *Pager {
+	if c.pager == nil {
+		pager := &Pager{}
+		if err := c.ShouldBind(pager); err == nil {
+			pager = NewRequestPager(pager.Page, pager.PageSize)
+		}
+		c.pager = pager
+	}
+	return c.pager
 }
 
-func (c *Context) PagerOff() {
-	c.apiSetting.outputPager = false
+func (c *Context) LoginUser() *LoginUser {
+	if c.loginUser == nil {
+		loginUser := LoginUser{}
+		if c.GetBool(CtxKeyNeedLogin) == true {
+			if obj, exists := c.Get(CtxKeyLoginUser); exists {
+				loginUser = obj.(LoginUser)
+			}
+		}
+		c.loginUser = &loginUser
+	}
+	return c.loginUser
 }
 
 // 绑定输入参数
-func (c *Context) BindInput(input interface{}) Err {
+func (c *Context) BindInput(input interface{}) error {
 	if err := checkInput(input); err == nil {
 		if err := c.ShouldBind(input); err != nil {
-			return Error(errCodeInvalidRequestParam, err)
+			return err
 		}
 		// 如果实现了 params 接口就验证参数
 		if obj, ok := input.(paramsCheck); ok {
 			if err := obj.Check(); err != nil {
-				return Error(errCodeInvalidRequestParam, err)
+				return err
 			}
 		}
-		c.apiSetting.bindInput = input
 	}
 	return nil
+}
+
+// 返回成功， 有数据
+func (c *Context) Success(data interface{}) {
+	c.Response(nil, data)
+}
+
+// 返回错误， 通用型
+func (c *Context) Fail(err Err) {
+	if err == nil {
+		err = Error(-1)
+	}
+	c.Response(err, struct{}{})
+}
+
+func (c *Context) Response(err Err, data interface{}) {
+	output := Response(err, c.adjustOutput(data))
+	c.Set(CtxKeyResponse, output)
+	c.JSON(http.StatusOK, output)
+}
+
+func (c *Context) adjustOutput(data interface{}) interface{} {
+	// 如果是分页请求,改变下返回结构
+	if c.outputPager == true {
+		type pageOutput struct {
+			Pager pagerResp   `json:"pager"`
+			List  interface{} `json:"list"`
+		}
+		data = pageOutput{
+			Pager: pagerResp{
+				Page:     c.Pager().Page,
+				PageSize: c.Pager().PageSize,
+				Total:    c.recordsCount,
+			},
+			List: data,
+		}
+	}
+	return data
+}
+// 输出结构展示分页
+func (c *Context) SetPager(count uint) {
+	c.recordsCount = count
+	c.outputPager = true
 }
 
 func checkInput(input interface{}) error {
@@ -210,64 +158,4 @@ func checkInput(input interface{}) error {
 		}
 	}
 	return nil
-}
-
-// 请求入参出参绑定
-func (c *Context) MustBinds(input interface{}, output interface{}) error {
-	if err := c.BindInput(input); err != nil {
-		return err
-	}
-	if err := c.bindOutput(output); err != nil {
-		return err
-	}
-	return nil
-}
-
-// 预先绑定输出结构
-func (c *Context) bindOutput(output interface{}) error {
-	// 非生产环境判断
-	if gin.Mode() == gin.DebugMode {
-		rv := reflect.ValueOf(output)
-		if rv.Kind() != reflect.Ptr || rv.IsNil() || !rv.IsValid() {
-			return outputTypeErr
-		}
-	}
-	c.apiSetting.bindOutput = output
-	return nil
-}
-
-// 设置输出结果
-func (c *Context) Output(v interface{}) {
-	c.apiSetting.bindOutput = v
-}
-
-// 不带外包装结构code，msg 直接输出
-func (c *Context) OutputWithoutWrapping(v interface{}) {
-	c.apiSetting.outputWithCode = false
-	c.apiSetting.bindOutput = v
-}
-
-// 返回成功， 有数据
-func (c *Context) Success(data interface{}) *Response {
-	return c.response(nil, data)
-}
-
-// 返回成功，不带数据，通用型
-func (c *Context) SuccessSimple() *Response {
-	return c.response(nil, struct{}{})
-}
-
-// 返回错误， 通用型
-func (c *Context) Fail(msg string, args ...interface{}) *Response {
-	err := Error(errCodeFail, fmt.Sprintf(msg, args...))
-	return c.response(err, struct{}{})
-}
-
-// 返回错误， 带错误信息
-func (c *Context) FailWithCode(err Err) *Response {
-	return c.response(err, struct{}{})
-}
-
-func (c *Context) response(err Err, data interface{}) *Response {
-	return ResponseWithCode(err, data)
 }

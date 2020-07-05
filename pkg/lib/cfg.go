@@ -2,9 +2,10 @@ package lib
 
 import (
 	"encoding/json"
-	"gopkg.in/ini.v1"
 	"regexp"
 	"strconv"
+
+	"gopkg.in/ini.v1"
 )
 
 // 将ini配置内容解析到指定的结构体中

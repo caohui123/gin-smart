@@ -1,13 +1,7 @@
 package app
 
-const (
-	MaxPageSize     = 200
-	DefaultPageSize = 20
-)
 
-type paramsCheck interface {
-	Check() error
-}
+
 
 // 有用
 type PagerIF interface {
@@ -16,18 +10,14 @@ type PagerIF interface {
 }
 
 type pagerResp struct {
-	Page     uint   `json:"page"`
-	PageSize uint   `json:"page_size"`
-	Total    uint64 `json:"total"`
+	Page     uint `json:"page"`
+	PageSize uint `json:"page_size"`
+	Total    uint `json:"total"`
 }
 
 type Pager struct {
 	Page     uint `json:"page" form:"page"`
 	PageSize uint `json:"page_size" form:"page_size"`
-}
-
-type PageResponse struct {
-	Pager pagerResp `json:"pager"`
 }
 
 func (p *Pager) Offset() uint {
@@ -41,35 +31,36 @@ func (p *Pager) Limit() uint {
 }
 
 func (p *Pager) secure() *Pager {
+	defaultPageSize := Runner.Cfg.General.DefaultPageSize
+	maxPageSize := Runner.Cfg.General.MaxPageSize
+	if maxPageSize == 0 {
+		maxPageSize = 200
+	}
+	if defaultPageSize == 0 {
+		defaultPageSize = 20
+	}
+
 	if p.Page <= 0 {
 		p.Page = 1
 	}
-	if p.PageSize <= 0 || p.PageSize > MaxPageSize {
-		p.PageSize = DefaultPageSize
+	if p.PageSize <= 0 || p.PageSize > maxPageSize {
+		p.PageSize = defaultPageSize
 	}
 	return p
 }
 
-func (r *PageResponse) GetTotal() uint64 {
-	return r.Pager.GetTotal()
-}
-
-func (r *PageResponse) SetPager(page uint, pageSize uint, total uint64) {
-	r.Pager.SetPager(page, pageSize, total)
-}
-
-func (r *pagerResp) SetPager(page uint, pageSize uint, total uint64) {
+func (r *pagerResp) SetPager(page uint, pageSize uint, total uint) {
 	r.Page = page
 	r.PageSize = pageSize
 	r.Total = total
 }
 
-func (r *pagerResp) GetTotal() uint64 {
+func (r *pagerResp) GetTotal() uint {
 	return r.Total
 }
 
-func NewPageRequest(page, pageSize uint) Pager {
-	pager := Pager{
+func NewRequestPager(page, pageSize uint) *Pager {
+	pager := &Pager{
 		Page:     page,
 		PageSize: pageSize,
 	}

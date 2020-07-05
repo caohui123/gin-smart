@@ -33,7 +33,7 @@ var allCodeMaps = []map[int]string{
 	appCodeMap,
 }
 
-func GetAllCodeMap() map[int]string {
+func CodeMap() map[int]string {
 	allMap := make(map[int]string)
 	for _, item := range allCodeMaps {
 		for k, v := range item {
