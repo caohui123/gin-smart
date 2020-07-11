@@ -143,6 +143,4 @@ func (s S) DefaultFloat32(defaultVal float32) float32 {
 }
 
 // ToJSON 转换为JSON
-func (s S) ToJSON(v interface{}) error {
-	return json.Unmarshal(s.Bytes(), v)
-}
+

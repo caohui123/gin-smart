@@ -1,94 +1,144 @@
 package app
 
 import (
-	"flag"
+	"errors"
 	"fmt"
-	"os"
-	"time"
+	"github.com/jangozw/gin-smart/config"
+	"github.com/jangozw/gin-smart/pkg/lib"
+	"github.com/jangozw/gin-smart/pkg/util"
+	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
+	"strings"
 )
+
+// 配置文件路径，启动参数指定
+var ConfigFile string
+
+// 解析的配置文件
+var Cfg *config.Config
+
+// 数据库
+var Db *gorm.DB
+
+// redis
+var Redis *lib.Redis
+
+// 日志
+var Log *logrus.Logger
 
 const (
-	TimeFormatFullDate = "2006-01-02 15:04:05" // 常规类型
-	EnvLocal           = "local"
-	EnvDev             = "dev"
-	EnvTest            = "test"
-	EnvProduction      = "production"
+	LogService   = `Log`
+	RedisService = `Redis`
+	DbService    = `Db`
 )
 
-var Setting SettingFields
-
-type paramsCheck interface {
-	Check() error
-}
-type TriggerIF interface {
-	Do()
-}
-
-// 触发
-func Trigger(tg TriggerIF) {
-	go tg.Do()
+// app 需要自动加载的服务配置，用不到的可以注释掉
+type loadServiceMap map[string]func() error
+var serviceMap = loadServiceMap{
+	LogService:   LoadLog,
+	RedisService: LoadRedis,
+	DbService:    LoadDb,
 }
 
-// 控制台参数
-type BootArgs struct {
-	Config string
-}
-
-//
-func GetBootArgs() BootArgs {
-	// 配置文件路径，取命令行config参数作为路径
-	configFile := GetConfigFile()
-	cmdArgsConfig := flag.String("config", configFile, "config file path, default: "+configFile)
-	flag.Parse()
-	if cmdArgsConfig != nil {
-		configFile = *cmdArgsConfig
+// app 包初始化，加载服务失败要panic
+func LoadServices(codes ...string) {
+	LoadCfg()
+	if len(codes) == 0 {
+		codes = serviceMap.keys()
 	}
-	return BootArgs{
-		Config: configFile,
+	for key, load := range serviceMap {
+		if InStringSlice(key, codes) {
+			if err := load(); err != nil {
+				panic("app加载服务失败:" + err.Error())
+			}
+		}
+	}
+	fmt.Println("--app加载服务完成, loaded:", strings.Join(codes, `,`))
+}
+
+// loadCfg 从启动参数或者项目目录中查找并加载配置文件
+func LoadCfg() {
+	if Cfg != nil {
+		return
+	}
+	// ConfigFile 在启动时候赋值
+	if ConfigFile == "" {
+		// 配置文件的启动参数名称 eg: -config=xx.ini
+		var configFlag = "config"
+		// 配置文件相对于运行目录的路径
+		var filename = "config.ini"
+
+		var err = errors.New(fmt.Sprintf("查找配置文件%s出错: %s", filename, "文件不存在"))
+		f, _ := util.FindConfigFile(filename, configFlag)
+		if f == "" {
+			panic(err)
+		}
+		ok, _ := util.IsPathExists(f)
+		if !ok {
+			panic(err)
+		}
+		ConfigFile = f
+	}
+	Cfg = &config.Config{}
+	if err := util.ParseIni(ConfigFile, Cfg); err != nil {
+		panic(fmt.Sprintf("解析配置文件%s出错: %s", ConfigFile, err.Error()))
 	}
 }
 
-func BootPath() string {
-	str, _ := os.Getwd()
-	return str
-}
-
-type SettingFields struct {
-	ErrCodeMap     map[int]string
-	ErrCodeSuccess int
-	BuildAt        string
-	StartAt        time.Time
-	BuildVersion   string
-	BootArgs       BootArgs
-}
-
-func getCodeMsg(code int) string {
-	if v, ok := Setting.ErrCodeMap[code]; ok {
-		return v
+func LoadDb() (err error) {
+	if Db != nil {
+		return nil
 	}
-	return fmt.Sprintf("unknown code:%d", code)
-}
-
-// 环境
-func IsEnvLocal() bool {
-	return CurrentEnv() == EnvLocal
-}
-
-func IsEnvDev() bool {
-	return CurrentEnv() == EnvDev
-}
-
-func IsEnvTest() bool {
-	return CurrentEnv() == EnvTest
-}
-
-func IsEnvProduction() bool {
-	return CurrentEnv() == EnvProduction
-}
-
-func CurrentEnv() string {
-	if Runner != nil {
-		return Runner.Cfg.Env.Env
+	LoadCfg()
+	cfgDb := lib.CfgDatabase{
+		Schema:   Cfg.Database.Schema,
+		Host:     Cfg.Database.Host,
+		User:     Cfg.Database.User,
+		Password: Cfg.Database.Password,
+		Database: Cfg.Database.Database,
 	}
-	return ""
+	Db, err = lib.NewDb(cfgDb)
+	return
+}
+
+func LoadRedis() (err error) {
+	if Redis != nil {
+		return nil
+	}
+	LoadCfg()
+	cfgRedis := lib.CfgRedis{
+		Host:     Cfg.Redis.Host,
+		Password: Cfg.Redis.Password,
+		DbNum:    Cfg.Redis.DbNum,
+	}
+	Redis, err = lib.NewRedis(cfgRedis)
+	return
+}
+
+func LoadLog() (err error) {
+	if Log != nil {
+		return nil
+	}
+	LoadCfg()
+	Log, err = lib.NewLogger(Cfg.General.LogDir, "app")
+	return
+}
+
+
+
+func InStringSlice(key string, src []string) bool {
+	for _, v := range src {
+		if v == key {
+			return true
+		}
+	}
+	return false
+}
+
+func (m loadServiceMap) keys() []string {
+	keys := make([]string, 0)
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

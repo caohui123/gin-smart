@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/jangozw/gin-smart/pkg/util"
 	"github.com/jinzhu/gorm"
 	"time"
 
@@ -16,7 +17,7 @@ const RedisKeyLoginUser = "login_user_token_"
 // try login a user and return the token to client, client need to store the receive token and put it in http header before api request
 func verifyAccount(account string, pwd string) (*model.SampleUser, error) {
 	var user model.SampleUser
-	if err := app.Runner.Db.Model(&user).Where("mobile=?", account).First(&user).Error; err != nil {
+	if err := app.Db.Model(&user).Where("mobile=?", account).First(&user).Error; err != nil {
 		return nil, err
 	}
 	if user.CheckPwd(pwd) != true {
@@ -26,26 +27,26 @@ func verifyAccount(account string, pwd string) (*model.SampleUser, error) {
 }
 
 func AppLogout(userId int64) error {
-	return app.Runner.Redis.DelKey(loginUserRedisKey(userId))
+	return app.Redis.DelKey(loginUserRedisKey(userId))
 }
 
 // 重新生成用户的token
 func refreshUserToken(userID int64, token string) (err error) {
 	// 存储 token
 	var userToken model.SampleUserToken
-	if err = app.Runner.Db.Model(&model.SampleUserToken{}).Where("user_id=?", userID).First(&userToken).Error; err != nil && err != gorm.ErrRecordNotFound {
+	if err = app.Db.Model(&model.SampleUserToken{}).Where("user_id=?", userID).First(&userToken).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
-	expSeconds := int64(app.Runner.Cfg.General.TokenExpireSeconds)
+	expSeconds := int64(app.Cfg.General.TokenExpire)
 	if userToken.ID == 0 {
 		data := model.SampleUserToken{
 			UserID:    userID,
 			Token:     string(token),
 			ExpiredAt: time.Now().Unix() + expSeconds,
 		}
-		err = app.Runner.Db.Create(&data).Error
+		err = app.Db.Create(&data).Error
 	} else {
-		err = app.Runner.Db.Model(&model.SampleUserToken{}).Where("id=?", userToken.ID).Update(map[string]interface{}{
+		err = app.Db.Model(&model.SampleUserToken{}).Where("id=?", userToken.ID).Update(map[string]interface{}{
 			"expired_at": time.Now().Unix() + expSeconds,
 			"token":      token,
 		}).Error
@@ -61,7 +62,7 @@ func refreshUserToken(userID int64, token string) (err error) {
 
 // set user's token in expires
 func redisSetLoginUser(userId int64, token string, exp int64) error {
-	if err := app.Runner.Redis.SetKey(loginUserRedisKey(userId), token, exp); err != nil {
+	if err := app.Redis.SetKey(loginUserRedisKey(userId), token, exp); err != nil {
 		return errors.New(fmt.Sprintf("redis set login user failed:%d, %s", userId, err.Error()))
 	}
 	return nil
@@ -69,7 +70,7 @@ func redisSetLoginUser(userId int64, token string, exp int64) error {
 
 //
 func redisGetLoginUser(userId int64) (string, error) {
-	return app.Runner.Redis.GetKey(loginUserRedisKey(userId))
+	return app.Redis.GetKey(loginUserRedisKey(userId))
 }
 
 func loginUserRedisKey(userId int64) string {
@@ -77,9 +78,9 @@ func loginUserRedisKey(userId int64) string {
 }
 
 // 用户列表
-func SampleGetUserList(search param.UserListRequest, pager app.Pager) (data param.SampleUserListResponse, err error) {
+func SampleGetUserList(search param.UserListRequest, pager util.Pager) (data param.SampleUserListResponse, err error) {
 	var users []model.SampleUser
-	query := app.Runner.Db.Model(&model.SampleUser{})
+	query := app.Db.Model(&model.SampleUser{})
 	if search.Mobile != "" {
 		query = query.Where("mobile = ?", search.Mobile)
 	}
@@ -92,7 +93,7 @@ func SampleGetUserList(search param.UserListRequest, pager app.Pager) (data para
 	}
 	for _, u := range users {
 		data = append(data, param.UserItem{
-			Id:     u.ID,
+			Id:     int64(u.ID),
 			Mobile: u.Mobile,
 			Name:   u.Name,
 		})
@@ -101,9 +102,9 @@ func SampleGetUserList(search param.UserListRequest, pager app.Pager) (data para
 	return
 }
 
-func SampleGetUserByID(id uint) (*model.SampleUser, error) {
+func SampleGetUserByID(id int64) (*model.SampleUser, error) {
 	var user model.SampleUser
-	if err := app.Runner.Db.Where("id=?", id).First(&user).Error; err != nil {
+	if err := app.Db.Where("id=?", id).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

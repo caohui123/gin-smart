@@ -2,12 +2,12 @@ package sample
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jangozw/gin-smart/errcode"
+	"github.com/jangozw/gin-smart/erro"
 	"github.com/jangozw/gin-smart/model"
 	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/app"
+	"github.com/jangozw/gin-smart/pkg/auth"
 	"github.com/jangozw/gin-smart/service"
-	"github.com/jangozw/go-api-facility/auth"
 )
 
 // login api
@@ -16,27 +16,62 @@ func SampleLogin(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var p param.LoginRequest
 	if err := ctx.ShouldBind(&p); err != nil {
-		ctx.Fail(app.Error(errcode.ErrRequestParams))
+		ctx.Fail(erro.Info(erro.ErrRequestParams))
 		return
 	}
-	jwtToken, err := auth.Login(&service.JwtUserLogin{
-		AccountID:  p.Mobile,
-		AccountPwd: p.Pwd,
-	})
+	// token 携带的user 信息根据业务情况设置
+	user := app.LoginUser{ID: 1}
+	jwtToken, err := auth.GenerateJwtToken(app.Cfg.General.JwtSecret, app.Cfg.General.TokenExpire, user)
 	if err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	output := param.LoginResponse{Token: string(jwtToken)}
 	ctx.Success(output)
 }
 
+func Sample(c *gin.Context) {
+	ctx := app.Ctx(c)
+	ctx.Success("ok")
+}
+
+func List(c *gin.Context) {
+	ctx := app.Ctx(c)
+
+	// 请求的分页信息
+	/*
+		page := ctx.Pager().Page
+		pageSize := ctx.Pager().PageSize
+		offset := ctx.Pager().Offset()
+		limit := ctx.Pager().Limit()
+	*/
+
+	type user struct {
+		Name string `json:"name"`
+		Age  int8   `json:"age"`
+	}
+	list := make([]user, 0)
+	list = append(list, user{
+		Name: "Dog",
+		Age:  2,
+	})
+	list = append(list, user{
+		Name: "Cat",
+		Age:  3,
+	})
+
+	var total uint = 2
+	// 设置数据总数， 自动调整输出结构为分页结构
+	ctx.SetPager(total)
+	ctx.Success(list)
+}
+
 // logout api
 func SampleLogout(c *gin.Context) {
 	ctx := app.Ctx(c)
-	userId := ctx.LoginUser().ID
+	userId := ctx.MustLoginUser().ID
 	if err := service.AppLogout(int64(userId)); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	ctx.Success(nil)
@@ -47,11 +82,11 @@ func SampleAddUser(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var input param.UserAddRequest
 	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	if user, err := model.SampleAddUser(input.Name, input.Mobile, input.Pwd); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	} else {
 		ctx.Success(param.SampleUserResponse{
@@ -68,12 +103,12 @@ func SampleUserList(c *gin.Context) {
 	// 校验请求参数, 校验规则定义在params.SearchUserList{}的tag里
 	search := param.UserListRequest{}
 	if err := ctx.BindInput(&search); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	// 校验参数成功后自动赋值给结构体
 	if users, err := service.SampleGetUserList(search, *ctx.Pager()); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	} else {
 		userList := make(param.SampleUserListResponse, len(users))
@@ -92,12 +127,12 @@ func SampleUserDetail(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var input param.UserDetailRequest
 	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	user, err := service.SampleGetUserByID(input.ID)
 	if err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	output := &param.UserDetailResponse{
@@ -115,14 +150,14 @@ func SampleUserModifyPwd(c *gin.Context) {
 	ctx := app.Ctx(c)
 	var input param.UserModifyPwdRequest
 	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	// 当前登陆用户
-	loginUid := ctx.LoginUser().ID
+	loginUid := ctx.MustLoginUser().ID
 	_, err := service.SampleGetUserByID(loginUid)
 	if err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	// 修改密码
@@ -138,7 +173,7 @@ func SampleUser(c *gin.Context) {
 	// 验证请求参数
 	input := param.SampleUser{}
 	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(app.Error(errcode.Failed))
+		ctx.Fail(erro.Info(erro.Failed))
 		return
 	}
 	// 返回结果

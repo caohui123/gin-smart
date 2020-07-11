@@ -33,7 +33,7 @@ type SampleUserToken struct {
 //
 func SampleAddUser(name, mobile, pwd string) (SampleUser, error) {
 	var total int
-	if err := app.Runner.Db.Model(&SampleUser{}).Where("mobile=?", mobile).Count(&total).Error; err != nil {
+	if err := app.Db.Model(&SampleUser{}).Where("mobile=?", mobile).Count(&total).Error; err != nil {
 		return SampleUser{}, err
 	}
 	if total > 0 {
@@ -44,11 +44,11 @@ func SampleAddUser(name, mobile, pwd string) (SampleUser, error) {
 		Mobile:   mobile,
 		Password: SampleMakeUserPwd(pwd),
 	}
-	return user, app.Runner.Db.Create(&user).Error
+	return user, app.Db.Create(&user).Error
 }
 
 func SampleFindUserByMobile(mobile string) (user SampleUser, err error) {
-	if err = app.Runner.Db.Where("mobile=?", mobile).First(&user).Error; err != nil {
+	if err = app.Db.Where("mobile=?", mobile).First(&user).Error; err != nil {
 		return
 	}
 	return user, nil

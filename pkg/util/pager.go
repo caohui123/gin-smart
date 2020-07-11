@@ -1,4 +1,4 @@
-package app
+package util
 
 // 有用
 type PagerIF interface {
@@ -6,7 +6,7 @@ type PagerIF interface {
 	GetTotal() uint
 }
 
-type pagerResp struct {
+type PageResp struct {
 	Page     uint `json:"page"`
 	PageSize uint `json:"page_size"`
 	Total    uint `json:"total"`
@@ -28,31 +28,25 @@ func (p *Pager) Limit() uint {
 }
 
 func (p *Pager) secure() *Pager {
-	defaultPageSize := Runner.Cfg.General.DefaultPageSize
-	maxPageSize := Runner.Cfg.General.MaxPageSize
-	if maxPageSize == 0 {
-		maxPageSize = 200
-	}
-	if defaultPageSize == 0 {
-		defaultPageSize = 20
-	}
-
 	if p.Page <= 0 {
 		p.Page = 1
 	}
-	if p.PageSize <= 0 || p.PageSize > maxPageSize {
-		p.PageSize = defaultPageSize
+	if p.PageSize <= 0 {
+		p.PageSize = 20
+	}
+	if  p.PageSize > 500 {
+		p.PageSize = 500
 	}
 	return p
 }
 
-func (r *pagerResp) SetPager(page uint, pageSize uint, total uint) {
+func (r *PageResp) SetPager(page uint, pageSize uint, total uint) {
 	r.Page = page
 	r.PageSize = pageSize
 	r.Total = total
 }
 
-func (r *pagerResp) GetTotal() uint {
+func (r *PageResp) GetTotal() uint {
 	return r.Total
 }
 

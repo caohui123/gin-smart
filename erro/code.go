@@ -1,4 +1,6 @@
-package errcode
+package erro
+
+import "fmt"
 
 // 1-1000 系统自带
 
@@ -41,4 +43,11 @@ func CodeMap() map[int]string {
 		}
 	}
 	return allMap
+}
+
+func GetCodeMsg(code int) string {
+	if v, ok := CodeMap()[code]; ok {
+		return v
+	}
+	return fmt.Sprintf("unknown code:%d", code)
 }

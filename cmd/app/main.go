@@ -1,14 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/jangozw/gin-smart/errcode"
-	"os"
-	"time"
-
 	"github.com/gin-gonic/gin"
+	"github.com/jangozw/gin-smart/pkg/util"
 	"github.com/jangozw/gin-smart/route"
+	"github.com/urfave/cli/v2"
+	"os"
+	"runtime"
 
 	"github.com/jangozw/gin-smart/pkg/app"
 )
@@ -18,43 +17,38 @@ var (
 	BuildAt      string // 编译时间
 )
 
-func before() {
-	app.Setting = app.SettingFields{
-		BootArgs:       app.GetBootArgs(),
-		BuildVersion:   BuildVersion,
-		BuildAt:        BuildAt,
-		StartAt:        time.Now(),
-		ErrCodeMap:     errcode.CodeMap(),
-		ErrCodeSuccess: errcode.Success,
+func main() {
+	if err := stack().Run(os.Args); err != nil {
+		panic(err)
 	}
-	// 注册运行依赖的资源,db,redis等
-	if err := app.NewRunner(); err != nil {
-		fmt.Println("Exit! setup app.Runner failed: ", err.Error())
-		os.Exit(1)
-	}
-	printInitInfo()
 }
 
-func main() {
-	before()
+func stack() *cli.App {
+	return &cli.App{
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "config",
+				Value:       "config.ini",
+				Destination: &app.ConfigFile,
+			},
+		},
+		Name:    "gin-smart",
+		Usage:   "eg: ./gin-smart",
+		Version: fmt.Sprintf("%s-%s-%s-%s-%s", runtime.GOOS, runtime.GOARCH, BuildVersion, BuildAt, util.Now()),
+		Action:  action,
+	}
+}
+
+
+func action(c *cli.Context) error {
+	app.LoadServices()
+	app.BuildInfo = c.App.Version
+	// 注册路由
 	gin.SetMode(gin.DebugMode)
 	engine := gin.New()
-	// 注册路由
 	route.Register(engine)
-	if err := engine.Run(fmt.Sprintf(":%d", app.Runner.Cfg.Server.Listen)); err != nil {
-		fmt.Println("Exit! setup web server failed: ", err.Error())
-		os.Exit(1)
+	if err := engine.Run(fmt.Sprintf(":%d", app.Cfg.General.ApiPort)); err != nil {
+		return err
 	}
-}
-
-func printInitInfo() {
-	var info = map[string]string{
-		"AppEnv": app.CurrentEnv(),
-		"Build":  app.Setting.BuildVersion + `@` + app.Setting.BuildAt,
-		"Config": app.GetConfigFile(),
-		"LogDir": app.Runner.Cfg.Log.LogDir,
-		"BootAt": app.BootPath(),
-	}
-	by, _ := json.Marshal(info)
-	fmt.Println("App init completely! ", string(by))
+	return nil
 }

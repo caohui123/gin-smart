@@ -1,51 +1,50 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/jangozw/gin-smart/erro"
+	"github.com/jangozw/gin-smart/param"
+	"github.com/jangozw/gin-smart/pkg/auth"
+	"github.com/jangozw/gin-smart/pkg/util"
 	"net/http"
 	"reflect"
 )
 
 const (
-	CtxKeyLoginUser = "ctx-login-user"
-	CtxKeyNeedLogin = "ctx-need-login"
-	CtxKeyResponse  = "ctx-response"
+	CtxKeyResponse = "ctx-response"
 )
 
 var (
 	inputTypeErr = errors.New("input 必须是一个结构体变量的地址")
 )
 
-// 登陆用户接口
-type LoginIF interface {
-	User() LoginUser
-}
-
 // 登陆用户信息, 可根据业务需要扩充字段
 type LoginUser struct {
-	ID    uint
-	Extra interface{}
+	ID int64
 }
 
-func (l *LoginUser) User() LoginUser {
-	return *l
-}
-
-// info 要传地址
-func (l *LoginUser) ExtraTo(info interface{}) error {
-	bytes, err := json.Marshal(l.Extra)
-	if err != nil {
-		return err
+// 根据token解析登陆用户
+func ParseUserByToken(token string) (LoginUser, error) {
+	user := LoginUser{}
+	if token == "" {
+		return user, errors.New("empty token")
 	}
-	return json.Unmarshal(bytes, info)
+	if jwtPayload, err := auth.ParseJwtToken(token, Cfg.General.JwtSecret); err != nil {
+		return user, err
+	} else if err := jwtPayload.ParseUser(&user); err != nil {
+		return user, err
+	}
+	if user.ID == 0 {
+		return user, errors.New("invalid login user")
+	}
+	return user, nil
 }
 
 // 用户api 请求
 type Context struct {
 	*gin.Context
-	pager        *Pager
+	pager        *util.Pager
 	loginUser    *LoginUser
 	outputPager  bool
 	recordsCount uint
@@ -56,26 +55,31 @@ func Ctx(c *gin.Context) *Context {
 }
 
 // 展示分页
-func (c *Context) Pager() *Pager {
+func (c *Context) Pager() *util.Pager {
 	if c.pager == nil {
-		pager := &Pager{}
+		pager := &util.Pager{}
 		if err := c.ShouldBind(pager); err == nil {
-			pager = NewRequestPager(pager.Page, pager.PageSize)
+			pager = util.NewRequestPager(pager.Page, pager.PageSize)
 		}
 		c.pager = pager
 	}
 	return c.pager
 }
 
-func (c *Context) LoginUser() *LoginUser {
+func (c *Context) LoginUser() (*LoginUser, error) {
 	if c.loginUser == nil {
-		loginUser := LoginUser{}
-		if c.GetBool(CtxKeyNeedLogin) == true {
-			if obj, exists := c.Get(CtxKeyLoginUser); exists {
-				loginUser = obj.(LoginUser)
-			}
+		user, err := ParseUserByToken(c.GetHeader(param.TokenHeaderKey))
+		if err != nil {
+			return nil, err
 		}
-		c.loginUser = &loginUser
+		c.loginUser = &user
+	}
+	return c.loginUser, nil
+}
+func (c *Context) MustLoginUser() *LoginUser {
+	_, err := c.LoginUser()
+	if err != nil {
+		panic(err)
 	}
 	return c.loginUser
 }
@@ -102,14 +106,14 @@ func (c *Context) Success(data interface{}) {
 }
 
 // 返回错误， 通用型
-func (c *Context) Fail(err Err) {
+func (c *Context) Fail(err erro.E) {
 	if err == nil {
-		err = Error(-1)
+		// err = erro.Info(-1)
 	}
 	c.Response(err, struct{}{})
 }
 
-func (c *Context) Response(err Err, data interface{}) {
+func (c *Context) Response(err erro.E, data interface{}) {
 	output := Response(err, c.adjustOutput(data))
 	c.Set(CtxKeyResponse, output)
 	c.JSON(http.StatusOK, output)
@@ -119,11 +123,11 @@ func (c *Context) adjustOutput(data interface{}) interface{} {
 	// 如果是分页请求,改变下返回结构
 	if c.outputPager == true {
 		type pageOutput struct {
-			Pager pagerResp   `json:"pager"`
+			Pager util.PageResp   `json:"pager"`
 			List  interface{} `json:"list"`
 		}
 		data = pageOutput{
-			Pager: pagerResp{
+			Pager: util.PageResp{
 				Page:     c.Pager().Page,
 				PageSize: c.Pager().PageSize,
 				Total:    c.recordsCount,

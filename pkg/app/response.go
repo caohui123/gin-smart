@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/jangozw/gin-smart/erro"
 	"time"
 )
 
@@ -18,21 +19,21 @@ func ResponseSuccess(data interface{}) *response {
 }
 
 // 返回错误， 带错误信息
-func ResponseFail(err Err) *response {
+func ResponseFail(err erro.E) *response {
 	return Response(err, struct{}{})
 }
 
 func ResponseFailByCode(code int) *response {
-	return Response(Error(code), struct{}{})
+	return Response(erro.Info(code), struct{}{})
 }
 
-func Response(err Err, data interface{}) *response {
+func Response(err erro.E, data interface{}) *response {
 	if err == nil {
-		err = Error(Setting.ErrCodeSuccess)
+		err = erro.Info(erro.Success)
 	}
 	errMsg := err.Msg()
 	if errMsg == "" {
-		errMsg = getCodeMsg(err.Code())
+		errMsg = erro.GetCodeMsg(err.Code())
 	}
 	return &response{
 		err.Code(),

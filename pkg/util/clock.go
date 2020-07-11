@@ -62,6 +62,10 @@ func UnixToYMDHIS(un int64) string {
 	return time.Unix(un, 0).Format(YMDHIS)
 }
 
+func Now() string {
+	return time.Unix(time.Now().Unix(), 0).Format(YMDHIS)
+}
+
 func UnixToYMD(un int64) string {
 	return time.Unix(un, 0).Format("2006-01-02")
 }

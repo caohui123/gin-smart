@@ -34,7 +34,7 @@ func (u *UserListRequest) Check() error {
 type SampleUserListResponse []UserItem
 
 type UserDetailRequest struct {
-	ID uint `json:"id" form:"id" binding:"required"`
+	ID int64 `json:"id" form:"id" binding:"required"`
 }
 
 type UserDetailResponse struct {
@@ -55,7 +55,7 @@ type UserAddResponse struct {
 }
 
 type UserItem struct {
-	Id     uint   `json:"id"`
+	Id     int64  `json:"id"`
 	Mobile string `json:"mobile"`
 	Name   string `json:"name"`
 }

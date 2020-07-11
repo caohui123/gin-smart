@@ -2,11 +2,11 @@ package middleware
 
 import (
 	"encoding/json"
+	"github.com/jangozw/gin-smart/param"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/pkg/app"
-	"github.com/jangozw/go-api-facility/auth"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,13 +23,11 @@ func LogToFile() gin.HandlerFunc {
 			if !ok {
 				resp = struct{}{}
 			}
-
-			var uid string
-			token := c.GetHeader(TokenHeaderKey)
+			var uid int64
+			token := c.GetHeader(param.TokenHeaderKey)
 			if token != "" {
-				if payload, err := auth.ParseJwtToken(token, app.Runner.Cfg.Encrypt.JwtSecret); err == nil {
-					uid = payload.AccountID
-				}
+				user, _ := app.ParseUserByToken(token)
+				uid = user.ID
 			}
 			var query interface{}
 			if c.Request.Method == "GET" {
@@ -42,7 +40,7 @@ func LogToFile() gin.HandlerFunc {
 			// uri := strings.ReplaceAll(c.Request.URL.RequestURI(), "\\u0026", "&")
 			uri := c.Request.URL.RequestURI()
 			// log 里有json.Marshal() 导致url转义字符
-			app.Runner.Log.Api.WithFields(logrus.Fields{
+			app.Log.WithFields(logrus.Fields{
 				"uid":      uid,
 				"query":    query,
 				"response": resp,

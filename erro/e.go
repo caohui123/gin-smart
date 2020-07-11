@@ -1,7 +1,9 @@
-package app
+package erro
+
+const CodeDefault = 1
 
 // 错误接口
-type Err interface {
+type E interface {
 	Error() string
 	Code() int
 	Msg() string
@@ -25,7 +27,22 @@ func (e *errInfo) Msg() string {
 	return e.msg
 }
 
-func Error(code int, msg ...string) *errInfo {
+func New(text string) E {
+	return &errInfo{
+		code: CodeDefault,
+		msg:  text,
+	}
+}
+
+func Info(code int, msg ...string) E {
+	var eMsg string
+	if len(msg) > 0 {
+		eMsg = msg[0]
+	}
+	return &errInfo{code: code, msg: eMsg}
+}
+
+func Fail(code int, msg ...string) E {
 	var eMsg string
 	if len(msg) > 0 {
 		eMsg = msg[0]

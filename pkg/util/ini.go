@@ -1,4 +1,4 @@
-package lib
+package util
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 )
 
 // 将ini配置内容解析到指定的结构体中
-func NewCfg(file string, receiveObj interface{}) error {
+func ParseIni(file string, receiveObj interface{}) error {
 	iniFile, err := ini.Load(file)
 	if err != nil {
 		return err

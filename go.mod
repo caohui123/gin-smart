@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/LyricTian/structs v1.1.1
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gomodule/redigo/redis v0.0.0-20200429221454-e14091dffc1b
@@ -15,6 +16,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.6.0
+	github.com/stretchr/testify v1.4.0
+	github.com/urfave/cli/v2 v2.2.0
 	gopkg.in/ini.v1 v1.57.0
 	gopkg.in/yaml.v2 v2.3.0
 )

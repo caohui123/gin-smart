@@ -1,19 +1,33 @@
 package config
 
-// 状态组
-type stateGroup struct {
-	Key  string  `json:"key"`
-	Desc string  `json:"desc"`
-	List []state `json:"list"`
+
+// config.ini 文件的struct
+type Config struct {
+	General struct {
+		Env             string `json:"env"`
+		ApiPort         int    `json:"api_port"`
+		JwtSecret       string `json:"jwt_secret"`
+		TokenExpire     int64  `json:"token_expire"`
+		LogDir          string `json:"log_dir"`
+		DefaultPageSize uint   `json:"default_page_size"`
+		MaxPageSize     uint   `json:"max_page_size"`
+	} `json:"general"`
+
+	Redis struct {
+		Host     string `json:"host"`
+		Password string `json:"password"`
+		DbNum    int    `json:"db_num"`
+	} `json:"redis"`
+
+	Database struct {
+		Schema   string `json:"schema"`
+		Host     string `json:"host"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		Database string `json:"database"`
+	} `json:"database"`
 }
 
-type state struct {
-	Key   string `json:"key"`
-	Value int    `json:"value"`
-	Desc  string `json:"desc"`
-}
-
-// 所有状态配置
-func GetAllStates() []stateGroup {
-	return allStates
+func (c *Config) Check() error {
+	return nil
 }

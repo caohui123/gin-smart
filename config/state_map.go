@@ -1,7 +1,5 @@
 package config
 
-import "github.com/jangozw/gin-smart/model"
-
 // allStates
 // 所有用到的状态值，用于返回给前端, 前端只需要记key，不需要记value, 这样后端状态的变化不会导致前端调整很多，一旦有状态变化再这里重新配置
 var allStates = []stateGroup{
@@ -12,12 +10,12 @@ var allStates = []stateGroup{
 		List: []state{
 			{
 				Key:   "normal",
-				Value: model.UserStatusNormal,
+				Value: 1,
 				Desc:  "正常",
 			},
 			{
 				Key:   "forbidden",
-				Value: model.UserStatusForbidden,
+				Value: 2,
 				Desc:  "禁止登陆",
 			},
 			// more

@@ -1,3 +1,4 @@
+# gofresh https://github.com/jangozw/gofresh
 # 监控代码变动的目录 . 表示当前目录
 watch_dir:          .
 
@@ -6,6 +7,9 @@ build_file :        cmd/app/main.go
 
 # 存放编译文件的临时目录
 tmp_path:          ./tmp
+
+# 启动参数 模版: -p=conf/test.ini
+run_arg:    -config=config.ini
 
 # 编译的二进制名称
 build_name:        app-main-build
