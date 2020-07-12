@@ -21,7 +21,7 @@ var appCodeMap = map[int]string{
 	Success:                "请求成功",
 	Failed:                 "请求失败",
 	ErrToken:               "token错误",
-	ErrInternal:            "内部错误",
+	ErrInternal:            "内部错误或异常",
 	ErrRequestParams:       "请求参数错误",
 	InvalidLoginUser:       "获取登陆用户失败",
 	InvalidContentTypeJSON: "Content-Type must be application/json",

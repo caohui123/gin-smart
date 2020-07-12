@@ -1,6 +1,6 @@
 package erro
 
-const CodeDefault = 1
+import "fmt"
 
 // 错误接口
 type E interface {
@@ -29,7 +29,7 @@ func (e *errInfo) Msg() string {
 
 func New(text string) E {
 	return &errInfo{
-		code: CodeDefault,
+		code: Failed,
 		msg:  text,
 	}
 }
@@ -40,6 +40,15 @@ func Info(code int, msg ...string) E {
 		eMsg = msg[0]
 	}
 	return &errInfo{code: code, msg: eMsg}
+}
+
+func Inner(msg ...string) E {
+	var eMsg string
+	if len(msg) > 0 {
+		eMsg = msg[0]
+	}
+	fmt.Println("--msg", eMsg, "---", msg)
+	return &errInfo{code: ErrInternal, msg: eMsg}
 }
 
 func Fail(code int, msg ...string) E {

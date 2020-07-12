@@ -1,14 +1,15 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/erro"
-	"net/http"
 
 	"github.com/jangozw/gin-smart/pkg/app"
 )
 
-func CommonMiddleware(c *gin.Context) {
+func Header(c *gin.Context) {
 	if c.Request.Method != "GET" && c.GetHeader("Content-Type") != "application/json" {
 		c.AbortWithStatusJSON(http.StatusOK, app.ResponseFailByCode(erro.InvalidContentTypeJSON))
 		return

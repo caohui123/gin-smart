@@ -1,6 +1,5 @@
 package config
 
-
 // config.ini 文件的struct
 type Config struct {
 	General struct {

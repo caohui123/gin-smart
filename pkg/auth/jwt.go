@@ -3,8 +3,9 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"github.com/dgrijalva/jwt-go"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // jwt token 加载的信息

@@ -70,3 +70,20 @@ func UniqueSliceString(src []string) []string {
 	}
 	return res
 }
+
+func InStringSlice(key string, src []string) bool {
+	for _, v := range src {
+		if v == key {
+			return true
+		}
+	}
+	return false
+}
+
+func MapStringKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0)
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}

@@ -23,6 +23,9 @@ func Pwd(pwd string)  string {
 }*/
 
 func ToJson(v interface{}) string {
+	if sv, ok := v.(string); ok {
+		return sv
+	}
 	j, err := json.Marshal(v)
 	if err != nil {
 		log.Fatal("json Marshal err")

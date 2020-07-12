@@ -2,8 +2,9 @@ package auth
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testPayload struct {
@@ -17,7 +18,7 @@ func TestGenerateJwtToken(t *testing.T) {
 		Name:   "hello",
 	}
 	token, err := GenerateJwtToken("123456", 600, user)
-	//assert.Nil(t, err)
+	// assert.Nil(t, err)
 	fmt.Println(token)
 	jwtPayload, err := ParseJwtToken(token, "123456")
 	assert.Nil(t, err)

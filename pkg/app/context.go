@@ -2,22 +2,21 @@ package app
 
 import (
 	"errors"
+	"net/http"
+	"reflect"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/erro"
 	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/auth"
 	"github.com/jangozw/gin-smart/pkg/util"
-	"net/http"
-	"reflect"
 )
 
 const (
 	CtxKeyResponse = "ctx-response"
 )
 
-var (
-	inputTypeErr = errors.New("input 必须是一个结构体变量的地址")
-)
+var inputTypeErr = errors.New("input 必须是一个结构体变量的地址")
 
 // 登陆用户信息, 可根据业务需要扩充字段
 type LoginUser struct {
@@ -45,7 +44,7 @@ func ParseUserByToken(token string) (LoginUser, error) {
 type Context struct {
 	*gin.Context
 	pager        *util.Pager
-	loginUser    *LoginUser
+	loginUser    LoginUser
 	outputPager  bool
 	recordsCount uint
 }
@@ -66,19 +65,20 @@ func (c *Context) Pager() *util.Pager {
 	return c.pager
 }
 
-func (c *Context) LoginUser() (*LoginUser, error) {
-	if c.loginUser == nil {
+func (c *Context) LoginUser() (LoginUser, error) {
+	if c.loginUser.ID == 0 {
 		user, err := ParseUserByToken(c.GetHeader(param.TokenHeaderKey))
 		if err != nil {
-			return nil, err
+			return c.loginUser, err
 		}
-		c.loginUser = &user
+		c.loginUser = user
 	}
 	return c.loginUser, nil
 }
-func (c *Context) MustLoginUser() *LoginUser {
-	_, err := c.LoginUser()
-	if err != nil {
+
+func (c *Context) MustLoginUser() LoginUser {
+	user, err := c.LoginUser()
+	if err != nil || user.ID == 0 {
 		panic(err)
 	}
 	return c.loginUser
@@ -123,8 +123,8 @@ func (c *Context) adjustOutput(data interface{}) interface{} {
 	// 如果是分页请求,改变下返回结构
 	if c.outputPager == true {
 		type pageOutput struct {
-			Pager util.PageResp   `json:"pager"`
-			List  interface{} `json:"list"`
+			Pager util.PageResp `json:"pager"`
+			List  interface{}   `json:"list"`
 		}
 		data = pageOutput{
 			Pager: util.PageResp{

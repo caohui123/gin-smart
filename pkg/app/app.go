@@ -3,13 +3,23 @@ package app
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/jangozw/gin-smart/config"
+	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/lib"
 	"github.com/jangozw/gin-smart/pkg/util"
 	"github.com/jinzhu/gorm"
-	"github.com/sirupsen/logrus"
-	"strings"
 )
+
+// 服务列表
+const (
+	LogService   = `Logger`
+	RedisService = `Redis`
+	DbService    = `Db`
+)
+
+type loadServiceMap map[string]func() error
 
 // 配置文件路径，启动参数指定
 var ConfigFile string
@@ -24,36 +34,37 @@ var Db *gorm.DB
 var Redis *lib.Redis
 
 // 日志
-var Log *logrus.Logger
+var Logger *lib.Logger
 
-const (
-	LogService   = `Log`
-	RedisService = `Redis`
-	DbService    = `Db`
-)
+// 已经加载的服务
+var Loaded []string
 
 // app 需要自动加载的服务配置，用不到的可以注释掉
-type loadServiceMap map[string]func() error
 var serviceMap = loadServiceMap{
-	LogService:   LoadLog,
+	LogService:   LoadLogger,
 	RedisService: LoadRedis,
 	DbService:    LoadDb,
 }
 
 // app 包初始化，加载服务失败要panic
-func LoadServices(codes ...string) {
+// cfg，logger 是系统要求强制加载的，其他服务可选
+func LoadServices(services ...string) {
 	LoadCfg()
-	if len(codes) == 0 {
-		codes = serviceMap.keys()
+	serviceMap[LogService] = LoadLogger
+
+	if len(services) == 0 {
+		services = serviceMap.keys()
 	}
+	Loaded = make([]string, 0)
 	for key, load := range serviceMap {
-		if InStringSlice(key, codes) {
+		if util.InStringSlice(key, services) {
 			if err := load(); err != nil {
 				panic("app加载服务失败:" + err.Error())
 			}
+			Loaded = append(Loaded, key)
 		}
 	}
-	fmt.Println("--app加载服务完成, loaded:", strings.Join(codes, `,`))
+	fmt.Println("--app加载服务完成, loaded:", strings.Join(services, `,`))
 }
 
 // loadCfg 从启动参数或者项目目录中查找并加载配置文件
@@ -64,11 +75,11 @@ func LoadCfg() {
 	// ConfigFile 在启动时候赋值
 	if ConfigFile == "" {
 		// 配置文件的启动参数名称 eg: -config=xx.ini
-		var configFlag = "config"
+		configFlag := param.ArgConfig
 		// 配置文件相对于运行目录的路径
-		var filename = "config.ini"
+		filename := param.ArgConfigFilename
 
-		var err = errors.New(fmt.Sprintf("查找配置文件%s出错: %s", filename, "文件不存在"))
+		err := errors.New(fmt.Sprintf("查找配置文件%s出错: %s", filename, "文件不存在"))
 		f, _ := util.FindConfigFile(filename, configFlag)
 		if f == "" {
 			panic(err)
@@ -85,6 +96,21 @@ func LoadCfg() {
 	}
 }
 
+// 加载日志
+func LoadLogger() (err error) {
+	if Logger != nil {
+		return nil
+	}
+	LoadCfg()
+	module := param.AppName
+	Logger, err = lib.NewLogger(Cfg.General.LogDir, module)
+	if err == nil {
+		fmt.Println("加载服务app Logger 成功,module=" + module + ",log_dir=" + Cfg.General.LogDir)
+	}
+	return
+}
+
+// 加载Db
 func LoadDb() (err error) {
 	if Db != nil {
 		return nil
@@ -101,6 +127,7 @@ func LoadDb() (err error) {
 	return
 }
 
+// 加载redis
 func LoadRedis() (err error) {
 	if Redis != nil {
 		return nil
@@ -115,29 +142,9 @@ func LoadRedis() (err error) {
 	return
 }
 
-func LoadLog() (err error) {
-	if Log != nil {
-		return nil
-	}
-	LoadCfg()
-	Log, err = lib.NewLogger(Cfg.General.LogDir, "app")
-	return
-}
-
-
-
-func InStringSlice(key string, src []string) bool {
-	for _, v := range src {
-		if v == key {
-			return true
-		}
-	}
-	return false
-}
-
 func (m loadServiceMap) keys() []string {
 	keys := make([]string, 0)
-	for k, _ := range m {
+	for k := range m {
 		keys = append(keys, k)
 	}
 	return keys

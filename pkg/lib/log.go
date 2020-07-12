@@ -9,7 +9,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewLogger(logDir string, module string) (*logrus.Logger, error) {
+type Logger struct {
+	*logrus.Logger
+}
+
+func NewLogger(logDir string, module string) (*Logger, error) {
 	src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		return nil, err
@@ -48,5 +52,5 @@ func NewLogger(logDir string, module string) (*logrus.Logger, error) {
 	//}
 	lfHook := lfshook.NewHook(writeMap, formatter)
 	logClient.AddHook(lfHook)
-	return logClient, nil
+	return &Logger{logClient}, nil
 }

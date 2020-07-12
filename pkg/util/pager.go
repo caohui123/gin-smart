@@ -34,7 +34,7 @@ func (p *Pager) secure() *Pager {
 	if p.PageSize <= 0 {
 		p.PageSize = 20
 	}
-	if  p.PageSize > 500 {
+	if p.PageSize > 500 {
 		p.PageSize = 500
 	}
 	return p
