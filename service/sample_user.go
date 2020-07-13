@@ -28,7 +28,7 @@ func verifyAccount(account string, pwd string) (*model.SampleUser, error) {
 }
 
 func AppLogout(userId int64) error {
-	return app.Redis.DelKey(loginUserRedisKey(userId))
+	return app.Redis.Del(loginUserRedisKey(userId))
 }
 
 // 重新生成用户的token
@@ -63,7 +63,7 @@ func refreshUserToken(userID int64, token string) (err error) {
 
 // set user's token in expires
 func redisSetLoginUser(userId int64, token string, exp int64) error {
-	if err := app.Redis.SetKey(loginUserRedisKey(userId), token, exp); err != nil {
+	if err := app.Redis.Set(loginUserRedisKey(userId), token, exp); err != nil {
 		return errors.New(fmt.Sprintf("redis set login user failed:%d, %s", userId, err.Error()))
 	}
 	return nil
@@ -71,7 +71,7 @@ func redisSetLoginUser(userId int64, token string, exp int64) error {
 
 //
 func redisGetLoginUser(userId int64) (string, error) {
-	return app.Redis.GetKey(loginUserRedisKey(userId))
+	return app.Redis.Get(loginUserRedisKey(userId))
 }
 
 func loginUserRedisKey(userId int64) string {

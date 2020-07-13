@@ -47,7 +47,6 @@ func Inner(msg ...string) E {
 	if len(msg) > 0 {
 		eMsg = msg[0]
 	}
-	fmt.Println("--msg", eMsg, "---", msg)
 	return &errInfo{code: ErrInternal, msg: eMsg}
 }
 
@@ -57,4 +56,12 @@ func Fail(code int, msg ...string) E {
 		eMsg = msg[0]
 	}
 	return &errInfo{code: code, msg: eMsg}
+}
+
+// FailCn Cn means Common
+func FailCn() E {
+	return &errInfo{code: Failed, msg: ""}
+}
+func FailBy(err error) E {
+	return &errInfo{code: Failed, msg: err.Error()}
 }

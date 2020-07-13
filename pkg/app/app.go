@@ -24,6 +24,9 @@ type loadServiceMap map[string]func() error
 // 配置文件路径，启动参数指定
 var ConfigFile string
 
+// 编译的app版本等信息
+var BuildInfo string
+
 // 解析的配置文件
 var Cfg *config.Config
 

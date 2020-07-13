@@ -17,7 +17,7 @@ type CfgRedis struct {
 }
 
 type Redis struct {
-	*redigo.Pool
+	pool *redigo.Pool
 }
 
 func NewRedis(cfg CfgRedis) (*Redis, error) {
@@ -54,27 +54,27 @@ func NewRedis(cfg CfgRedis) (*Redis, error) {
 	return &Redis{pool}, nil
 }
 
-func (pool *Redis) closePool() {
+func (r *Redis) closePool() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
 	signal.Notify(c, syscall.SIGKILL)
 	go func() {
 		<-c
-		pool.Close()
+		r.pool.Close()
 	}()
 }
 
 // get
-func (pool *Redis) GetKey(key string) (string, error) {
-	rds := pool.Get()
+func (r *Redis) Get(key string) (string, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.String(rds.Do("GET", key))
 }
 
 // set expires为0时，表示永久性存储
-func (pool *Redis) SetKey(key string, value interface{}, expires int64) error {
-	rds := pool.Get()
+func (r *Redis) Set(key string, value interface{}, expires int64) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	if expires == 0 {
 		_, err := rds.Do("SET", key, value)
@@ -86,38 +86,38 @@ func (pool *Redis) SetKey(key string, value interface{}, expires int64) error {
 }
 
 // del
-func (pool *Redis) DelKey(key string) error {
-	rds := pool.Get()
+func (r *Redis) Del(key string) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	_, err := rds.Do("DEL", key)
 	return err
 }
 
 // lrange
-func (pool *Redis) LRange(key string, start, stop int64) ([]string, error) {
-	rds := pool.Get()
+func (r *Redis) LRange(key string, start, stop int64) ([]string, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.Strings(rds.Do("LRANGE", key, start, stop))
 }
 
 // lpop
-func (pool *Redis) LPop(key string) (string, error) {
-	rds := pool.Get()
+func (r *Redis) LPop(key string) (string, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.String(rds.Do("LPOP", key))
 }
 
 // LPush
-func (pool *Redis) LPush(key, value interface{}) error {
-	rds := pool.Get()
+func (r *Redis) LPush(key, value interface{}) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	_, err := rds.Do("LPUSH", key, value)
 	return err
 }
 
 // LPushAndTrimKey
-func (pool *Redis) LPushAndTrimKey(key, value interface{}, size int64) error {
-	rds := pool.Get()
+func (r *Redis) LPushAndTrimKey(key, value interface{}, size int64) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	rds.Send("MULTI")
 	rds.Send("LPUSH", key, value)
@@ -127,8 +127,8 @@ func (pool *Redis) LPushAndTrimKey(key, value interface{}, size int64) error {
 }
 
 // RPushAndTrimKey
-func (pool *Redis) RPushAndTrimKey(key, value interface{}, size int64) error {
-	rds := pool.Get()
+func (r *Redis) RPushAndTrimKey(key, value interface{}, size int64) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	rds.Send("MULTI")
 	rds.Send("RPUSH", key, value)
@@ -138,50 +138,50 @@ func (pool *Redis) RPushAndTrimKey(key, value interface{}, size int64) error {
 }
 
 // ExistsKey
-func (pool *Redis) ExistsKey(key string) (bool, error) {
-	rds := pool.Get()
+func (r *Redis) Exists(key string) (bool, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.Bool(rds.Do("EXISTS", key))
 }
 
 // ttl 返回剩余时间
-func (pool *Redis) TTLKey(key string) (int64, error) {
-	rds := pool.Get()
+func (r *Redis) TTLKey(key string) (int64, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.Int64(rds.Do("TTL", key))
 }
 
-func (pool *Redis) ExpireKey(key string, expires int) (bool, error) {
-	rds := pool.Get()
+func (r *Redis) ExpireKey(key string, expires int) (bool, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.Bool(rds.Do("EXPIRE", key, expires))
 }
 
 // incr 自增
-func (pool *Redis) Incr(key string) (int64, error) {
-	rds := pool.Get()
+func (r *Redis) Incr(key string) (int64, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.Int64(rds.Do("INCR", key))
 }
 
 // Decr 自减
-func (pool *Redis) Decr(key string) (int64, error) {
-	rds := pool.Get()
+func (r *Redis) Decr(key string) (int64, error) {
+	rds := r.pool.Get()
 	defer rds.Close()
 	return redigo.Int64(rds.Do("DECR", key))
 }
 
 // mset 批量写入 rds.Do("MSET", "ket1", "value1", "key2","value2")
-func (pool *Redis) MsetKey(keyValue ...interface{}) error {
-	rds := pool.Get()
+func (r *Redis) MSet(keyValue ...interface{}) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	_, err := rds.Do("MSET", keyValue...)
 	return err
 }
 
 // mget  批量读取 mget key1, key2, 返回map结构
-func (pool *Redis) MgetKey(keys ...interface{}) map[interface{}]string {
-	rds := pool.Get()
+func (r *Redis) MGet(keys ...interface{}) map[interface{}]string {
+	rds := r.pool.Get()
 	defer rds.Close()
 	values, _ := redigo.Strings(rds.Do("MGET", keys...))
 	resultMap := map[interface{}]string{}
@@ -193,16 +193,16 @@ func (pool *Redis) MgetKey(keys ...interface{}) map[interface{}]string {
 }
 
 // hmset 同时将多个 field-value (域-值)对设置到哈希表 key 中。
-func (pool *Redis) HMsetKey(key string, simpleObject interface{}) error {
-	rds := pool.Get()
+func (r *Redis) HMSet(key string, simpleObject interface{}) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	_, err := rds.Do("HMSET", redigo.Args{}.Add(key).AddFlat(simpleObject)...)
 	return err
 }
 
 // hmget 返回哈希表 key 中，一个或多个给定域的值
-func (pool *Redis) HMgetKey(key string, simpleObject interface{}) error {
-	rds := pool.Get()
+func (r *Redis) HMGet(key string, simpleObject interface{}) error {
+	rds := r.pool.Get()
 	defer rds.Close()
 	values, _ := redigo.Values(rds.Do("HGETALL", key))
 

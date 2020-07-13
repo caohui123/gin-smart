@@ -12,31 +12,26 @@ import (
 
 // login api
 
-func SampleLogin(c *gin.Context) {
-	ctx := app.Ctx(c)
+func SampleLogin(c *gin.Context) (interface{}, erro.E) {
 	var p param.LoginRequest
-	if err := ctx.ShouldBind(&p); err != nil {
-		ctx.Fail(erro.Info(erro.ErrRequestParams))
-		return
+	if err := c.ShouldBind(&p); err != nil {
+		return nil, erro.Fail(erro.ErrRequestParams)
 	}
 	// token 携带的user 信息根据业务情况设置
 	user := app.LoginUser{ID: 1}
 	jwtToken, err := auth.GenerateJwtToken(app.Cfg.General.JwtSecret, app.Cfg.General.TokenExpire, user)
 	if err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+		return nil, erro.FailBy(err)
 	}
-	output := param.LoginResponse{Token: string(jwtToken)}
-	ctx.Success(output)
+	output := param.LoginResponse{Token: jwtToken}
+	return output, nil
 }
 
-func Sample(c *gin.Context) {
-	ctx := app.Ctx(c)
-	ctx.Success("ok")
+func Sample(c *app.Context) (interface{}, erro.E) {
+	return "sample ok", nil
 }
 
-func List(c *gin.Context) {
-	ctx := app.Ctx(c)
+func List(c *app.Context) (interface{}, erro.E) {
 
 	// 请求的分页信息
 	/*
@@ -62,78 +57,67 @@ func List(c *gin.Context) {
 
 	var total uint = 2
 	// 设置数据总数， 自动调整输出结构为分页结构
-	ctx.SetPager(total)
-	ctx.Success(list)
+	c.SetPager(total)
+	return list, nil
 }
 
 // logout api
-func SampleLogout(c *gin.Context) {
-	ctx := app.Ctx(c)
-	userId := ctx.MustLoginUser().ID
+func SampleLogout(c *app.Context) (interface{}, erro.E) {
+	userId := c.MustLoginUser().ID
 	if err := service.AppLogout(int64(userId)); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+		return nil, erro.FailBy(err)
 	}
-	ctx.Success(nil)
+	return nil, nil
 }
 
 // 添加用户
-func SampleAddUser(c *gin.Context) {
-	ctx := app.Ctx(c)
+func SampleAddUser(c *app.Context) (interface{}, erro.E) {
 	var input param.UserAddRequest
-	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+	if err := c.BindInput(&input); err != nil {
+		return nil, erro.FailCn()
 	}
 	if user, err := model.SampleAddUser(input.Name, input.Mobile, input.Pwd); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+		return nil, erro.FailCn()
 	} else {
-		ctx.Success(param.SampleUserResponse{
+		data := param.SampleUserResponse{
 			ID:     user.ID,
 			Name:   user.Name,
 			Mobile: user.Mobile,
-		})
+		}
+		return data, nil
 	}
 }
 
 // 用户列表，有分页
-func SampleUserList(c *gin.Context) {
-	ctx := app.Ctx(c)
+func SampleUserList(c *app.Context) (interface{}, erro.E) {
 	// 校验请求参数, 校验规则定义在params.SearchUserList{}的tag里
 	search := param.UserListRequest{}
-	if err := ctx.BindInput(&search); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+	if err := c.BindInput(&search); err != nil {
+		return nil, erro.FailCn()
 	}
 	// 校验参数成功后自动赋值给结构体
-	if users, err := service.SampleGetUserList(search, *ctx.Pager()); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
-	} else {
-		userList := make(param.SampleUserListResponse, len(users))
-		for i, v := range users {
-			userList[i].Id = v.Id
-			userList[i].Name = v.Name
-			userList[i].Mobile = v.Mobile
-		}
-		ctx.Success(userList)
+	users, err := service.SampleGetUserList(search, *c.Pager())
+	if err != nil {
+		return nil, erro.FailBy(err)
 	}
-	return
+	userList := make(param.SampleUserListResponse, len(users))
+	for i, v := range users {
+		userList[i].Id = v.Id
+		userList[i].Name = v.Name
+		userList[i].Mobile = v.Mobile
+	}
+	return userList, nil
 }
 
 // 用户详情
-func SampleUserDetail(c *gin.Context) {
-	ctx := app.Ctx(c)
+func SampleUserDetail(c *app.Context) (interface{}, erro.E) {
 	var input param.UserDetailRequest
-	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+	if err := c.BindInput(&input); err != nil {
+		return nil, erro.FailBy(err)
 	}
 	user, err := service.SampleGetUserByID(input.ID)
 	if err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+		return nil, erro.FailBy(err)
 	}
 	output := &param.UserDetailResponse{
 		Id:     user.ID,
@@ -141,47 +125,37 @@ func SampleUserDetail(c *gin.Context) {
 		Name:   user.Name,
 	}
 	// c.OutputWithoutWrapping(output)
-	ctx.Success(output)
-	return
+	return output, nil
 }
 
 // 修改的自己的密码
-func SampleUserModifyPwd(c *gin.Context) {
-	ctx := app.Ctx(c)
+func SampleUserModifyPwd(c *app.Context) (interface{}, erro.E) {
 	var input param.UserModifyPwdRequest
-	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+	if err := c.BindInput(&input); err != nil {
+		return nil, erro.FailCn()
 	}
 	// 当前登陆用户
-	loginUid := ctx.MustLoginUser().ID
+	loginUid := c.MustLoginUser().ID
 	_, err := service.SampleGetUserByID(loginUid)
 	if err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+		return nil, erro.FailBy(err)
 	}
 	// 修改密码
 	// 。。。
-	ctx.Success(nil)
-	return
+	return nil, nil
 }
 
 // 用户列表
-func SampleUser(c *gin.Context) {
-	ctx := app.Ctx(c)
-
+func SampleUser(c *app.Context) (interface{}, erro.E) {
 	// 验证请求参数
 	input := param.SampleUser{}
-	if err := ctx.BindInput(&input); err != nil {
-		ctx.Fail(erro.Info(erro.Failed))
-		return
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, erro.FailBy(err)
 	}
 	// 返回结果
 	output := param.SampleUserResponse{
 		Name:   "sample",
 		Mobile: "135000000000",
 	}
-	// 设置输出结果
-	ctx.Success(output)
-	return
+	return output, nil
 }

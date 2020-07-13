@@ -3,41 +3,42 @@ package route
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/api/sample"
+	"github.com/jangozw/gin-smart/config"
+	"github.com/jangozw/gin-smart/erro"
 	"github.com/jangozw/gin-smart/middleware"
 	"github.com/jangozw/gin-smart/pkg/app"
 )
 
-var warp = app.Warp
-
 // 注册路由
-func Register(router *gin.Engine) {
-	sampleGroup := router.Group("/sample", warp(middleware.LogRequest), warp(middleware.Header))
-	homeGroup := router.Group("/", warp(middleware.LogRequest), warp(middleware.Header))
-	v1Group := router.Group("/v1", warp(middleware.LogRequest), warp(middleware.Header))
-	v1LoginGroup := router.Group("/v1", warp(middleware.LogRequest), warp(middleware.Header), warp(middleware.CheckToken))
+func Register(engine *gin.Engine) {
 
-	sampleGroup.GET("", warp(func(context *gin.Context) {
-		ctx := app.Ctx(context)
-		ctx.MustLoginUser()
-		ctx.Success("Sample here")
-	}))
+	// 路由组
+	var (
+		router       = app.Engine(engine)
+		sampleGroup  = router.Group("/sample", middleware.LogRequest, middleware.Header)
+		homeGroup    = router.Group("/", middleware.LogRequest, middleware.Header)
+		v1Group      = router.Group("/v1", middleware.LogRequest, middleware.Header)
+		v1LoginGroup = router.Group("/v1", middleware.LogRequest, middleware.Header, middleware.CheckToken)
+	)
+	// 定义路由
+	homeGroup.GET(``, func(c *app.Context) (data interface{}, err erro.E) {
+		c.MustLoginUser()
+		return "welcome", nil
+	})
+	sampleGroup.GET(``, func(c *app.Context) (data interface{}, err erro.E) {
+		return "sample test ok", nil
+	})
 
-	sampleGroup.GET("sample", warp(sample.Sample))
+	sampleGroup.GET("sample", sample.Sample)
 
-	sampleGroup.GET("/list", warp(sample.List))
+	sampleGroup.GET("/list", sample.List)
 
-	homeGroup.GET(`/home`, warp(func(context *gin.Context) {
-		ctx := app.Ctx(context)
-		user := ctx.MustLoginUser()
-		// panic("aa")
-		ctx.Success(user)
-	}))
+	v1Group.GET("/test", func(c *app.Context) (data interface{}, err erro.E) {
+		return "test", nil
+	})
 
-	v1Group.GET("/test", warp(func(c *gin.Context) {
-		app.Ctx(c).Success("ok v1 test")
-	}))
-
-	v1LoginGroup.GET(`/config`, warp(func(c *gin.Context) {
-		app.Ctx(c).Success("ok")
-	}))
+	v1LoginGroup.GET(`/config`, func(c *app.Context) (data interface{}, err erro.E) {
+		c.MustLoginUser()
+		return config.GetAllStates(), nil
+	})
 }
