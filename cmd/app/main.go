@@ -5,7 +5,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/app"
 	"github.com/jangozw/gin-smart/pkg/util"
@@ -14,8 +13,10 @@ import (
 )
 
 var (
-	BuildVersion string // 编译的app版本
-	BuildAt      string // 编译时间
+	// 编译的app版本
+	BuildVersion string
+	// 编译时间
+	BuildAt string
 )
 
 func main() {
@@ -25,6 +26,7 @@ func main() {
 }
 
 func stack() *cli.App {
+	app.BuildInfo = fmt.Sprintf("%s-%s-%s-%s-%s", runtime.GOOS, runtime.GOARCH, BuildVersion, BuildAt, util.Now())
 	return &cli.App{
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -34,31 +36,18 @@ func stack() *cli.App {
 			},
 		},
 		Name:    param.AppName,
-		Usage:   fmt.Sprintf("./%s -%s=%s", param.AppName, param.ArgConfig, param.ArgConfigFilename),
-		Version: fmt.Sprintf("%s-%s-%s-%s-%s", runtime.GOOS, runtime.GOARCH, BuildVersion, BuildAt, util.Now()),
+		Version: app.BuildInfo,
+		Usage:   usage(),
 		Action:  action,
-		Before:  before,
 	}
 }
 
-// 初始化加载服务
-func before(c *cli.Context) error {
-	app.LoadServices()
-	app.BuildInfo = c.App.Version
-	if app.Logger != nil {
-		app.Logger.Infof("%s init successfully! loaded services: %s", param.AppName, app.Loaded)
-	}
-	return nil
-}
-
-// 注册路由
+// 初始化服务，注册路由
 func action(c *cli.Context) error {
-	// 注册路由
-	gin.SetMode(gin.DebugMode)
-	engine := gin.New()
-	route.Register(engine)
-	if err := engine.Run(fmt.Sprintf(":%d", app.Cfg.General.ApiPort)); err != nil {
-		return err
-	}
-	return nil
+	app.InitServices()
+	return app.NewEngine(route.Register).Run()
+}
+
+func usage() string {
+	return fmt.Sprintf("./%s -%s=%s", param.AppName, param.ArgConfig, param.ArgConfigFilename)
 }

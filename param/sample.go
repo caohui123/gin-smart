@@ -5,14 +5,14 @@ type SampleUser struct {
 }
 
 type SampleUserResponse struct {
-	ID     uint   `json:"id"`
+	ID     int64  `json:"id"`
 	Name   string `json:"name"`
 	Mobile string `json:"mobile"`
 }
 
 type LoginRequest struct {
-	Mobile string `form:"mobile" binding:"required"`
-	Pwd    string `form:"pwd" binding:"required"`
+	Mobile string `json:"mobile" form:"mobile" binding:"required"`
+	Pwd    string `json:"pwd" form:"pwd" binding:"required"`
 }
 
 type LoginResponse struct {
@@ -31,14 +31,12 @@ func (u *UserListRequest) Check() error {
 	return nil
 }
 
-type SampleUserListResponse []UserItem
-
 type UserDetailRequest struct {
 	ID int64 `json:"id" form:"id" binding:"required"`
 }
 
 type UserDetailResponse struct {
-	Id     uint   `json:"id"`
+	Id     int64  `json:"id"`
 	Mobile string `json:"mobile"`
 	Name   string `json:"name"`
 }

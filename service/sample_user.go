@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jangozw/gin-smart/pkg/util"
 	"github.com/jinzhu/gorm"
 
 	"github.com/jangozw/gin-smart/model"
@@ -16,8 +15,8 @@ import (
 const RedisKeyLoginUser = "login_user_token_"
 
 // try login a user and return the token to client, client need to store the receive token and put it in http header before api request
-func verifyAccount(account string, pwd string) (*model.SampleUser, error) {
-	var user model.SampleUser
+func verifyAccount(account string, pwd string) (*model.User, error) {
+	var user model.User
 	if err := app.Db.Model(&user).Where("mobile=?", account).First(&user).Error; err != nil {
 		return nil, err
 	}
@@ -34,20 +33,20 @@ func AppLogout(userId int64) error {
 // 重新生成用户的token
 func refreshUserToken(userID int64, token string) (err error) {
 	// 存储 token
-	var userToken model.SampleUserToken
-	if err = app.Db.Model(&model.SampleUserToken{}).Where("user_id=?", userID).First(&userToken).Error; err != nil && err != gorm.ErrRecordNotFound {
+	var userToken model.UserToken
+	if err = app.Db.Model(&model.UserToken{}).Where("user_id=?", userID).First(&userToken).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
 	expSeconds := int64(app.Cfg.General.TokenExpire)
 	if userToken.ID == 0 {
-		data := model.SampleUserToken{
+		data := model.UserToken{
 			UserID:    userID,
 			Token:     string(token),
 			ExpiredAt: time.Now().Unix() + expSeconds,
 		}
 		err = app.Db.Create(&data).Error
 	} else {
-		err = app.Db.Model(&model.SampleUserToken{}).Where("id=?", userToken.ID).Update(map[string]interface{}{
+		err = app.Db.Model(&model.UserToken{}).Where("id=?", userToken.ID).Update(map[string]interface{}{
 			"expired_at": time.Now().Unix() + expSeconds,
 			"token":      token,
 		}).Error
@@ -79,14 +78,13 @@ func loginUserRedisKey(userId int64) string {
 }
 
 // 用户列表
-func SampleGetUserList(search param.UserListRequest, pager util.Pager) (data param.SampleUserListResponse, err error) {
-	var users []model.SampleUser
-	query := app.Db.Model(&model.SampleUser{})
+func SampleGetUserList(search param.UserListRequest, pager *app.Pager) (data []param.UserItem, err error) {
+	var users []model.User
+	query := app.Db.Model(&model.User{})
 	if search.Mobile != "" {
 		query = query.Where("mobile = ?", search.Mobile)
 	}
-	var total uint
-	if err = query.Count(&total).Error; err != nil {
+	if err = query.Count(&pager.Total).Error; err != nil {
 		return
 	}
 	if err = query.Limit(pager.Limit()).Offset(pager.Offset()).Find(&users).Error; err != nil {
@@ -94,7 +92,7 @@ func SampleGetUserList(search param.UserListRequest, pager util.Pager) (data par
 	}
 	for _, u := range users {
 		data = append(data, param.UserItem{
-			Id:     int64(u.ID),
+			Id:     u.ID,
 			Mobile: u.Mobile,
 			Name:   u.Name,
 		})
@@ -103,8 +101,8 @@ func SampleGetUserList(search param.UserListRequest, pager util.Pager) (data par
 	return
 }
 
-func SampleGetUserByID(id int64) (*model.SampleUser, error) {
-	var user model.SampleUser
+func SampleGetUserByID(id int64) (*model.User, error) {
+	var user model.User
 	if err := app.Db.Where("id=?", id).First(&user).Error; err != nil {
 		return nil, err
 	}

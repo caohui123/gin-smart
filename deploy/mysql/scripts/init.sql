@@ -1,5 +1,5 @@
 #创建数据库
-create database if not exists ginapicommon default character set utf8;
+create database if not exists gin_smart default character set utf8;
 
 
 
@@ -32,15 +32,15 @@ flush privileges;
 -- ------------------------------ demo data ----------------------------------------------------------------------------------------
 # 用到的sql只是示例用法
 # 本例中用到的表
-use ginapicommon;
+use gin_smart;
 create table if not exists `user`  (
     `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
      name varchar(16) not null default '' comment '姓名',
      mobile varchar(20) not null default 0 comment '手机号',
      password varchar(64) not null default 0 comment '密码',
      status tinyint(2) not null  default 0 comment '状态',
-    `created_at` int(11) NOT NULL DEFAULT 0 COMMENT '创建时间',
-    `updated_at` int(11) NOT NULL DEFAULT 0 COMMENT '更新时间',
+    `created_at` datetime default null COMMENT '创建时间',
+    `updated_at` datetime default null COMMENT '更新时间',
     `deleted_at` datetime default null COMMENT '删除时间',
     PRIMARY KEY (`id`),
     key idx_mobile (`mobile`)
@@ -48,7 +48,7 @@ create table if not exists `user`  (
 
 
 # pwd is 123456
-INSERT INTO `user` (`created_at`,`updated_at`,`deleted_at`,`name`,`mobile`,`password`,`status`) VALUES (1577091432,1577091432,NULL,'hello','18000000000','c2cb76e4f39bd2d5c78395c7df7f94b1fa84a78097e7ec3fa905bcdfff699029',0);
+INSERT INTO `user` (`name`,`mobile`,`password`,`status`) VALUES ('hello','18000000000','c2cb76e4f39bd2d5c78395c7df7f94b1fa84a78097e7ec3fa905bcdfff699029',0);
 
 # user token
 create table if not exists `user_token` (
@@ -56,8 +56,8 @@ create table if not exists `user_token` (
     user_id bigint(20) not null default 0 comment '用户id',
     token varchar(64) not null default 0 comment 'token',
     `expired_at` int(11) NOT NULL DEFAULT 0 COMMENT '过期时间',
-    `created_at` int(11) NOT NULL DEFAULT 0 COMMENT '创建时间',
-    `updated_at` int(11) NOT NULL DEFAULT 0 COMMENT '更新时间',
+     `created_at` datetime default null COMMENT '创建时间',
+    `updated_at` datetime default null COMMENT '更新时间',
     `deleted_at` datetime default null COMMENT '删除时间',
     PRIMARY KEY (`id`),
     key idx_uid (`user_id`)

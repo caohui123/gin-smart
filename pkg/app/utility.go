@@ -5,18 +5,23 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jangozw/gin-smart/pkg/util"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	TimeFormatFullDate = "2006-01-02 15:04:05" // 常规类型
-	EnvLocal           = "local"
-	EnvDev             = "dev"
-	EnvTest            = "test"
-	EnvProduction      = "production"
-	CtxStartTime       = "ctx-start-time"
+	EnvLocal      = "local"
+	EnvDev        = "dev"
+	EnvTest       = "test"
+	EnvProduction = "production"
+	CtxStartTime  = "ctx-start-time"
 )
+
+type Pager struct {
+	util.Pager
+}
 
 type paramsCheck interface {
 	Check() error
@@ -29,6 +34,14 @@ type TriggerIF interface {
 // 触发
 func Trigger(tg TriggerIF) {
 	go tg.Do()
+}
+
+// api 监听地址
+func HttpServeAddr() string {
+	if Cfg != nil {
+		return fmt.Sprintf(":%d", Cfg.General.ApiPort)
+	}
+	return ""
 }
 
 // 环境
@@ -55,6 +68,7 @@ func CurrentEnv() string {
 	return ""
 }
 
+// api 请求发生了panic 记入日志
 func LogApiPanic(c *gin.Context, panicMsg interface{}) {
 	ctx := Ctx(c)
 	user, _ := ctx.LoginUser()

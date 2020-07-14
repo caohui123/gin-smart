@@ -1,33 +1,22 @@
 package util
 
-// 有用
-type PagerIF interface {
-	SetPager(page uint, pageSize, total uint64)
-	GetTotal() uint
-}
-
-type PageResp struct {
-	Page     uint `json:"page"`
-	PageSize uint `json:"page_size"`
-	Total    uint `json:"total"`
-}
-
 type Pager struct {
-	Page     uint `json:"page" form:"page"`
-	PageSize uint `json:"page_size" form:"page_size"`
+	Page     uint64 `json:"page" form:"page"`
+	PageSize uint64 `json:"page_size" form:"page_size"`
+	Total    uint64 `json:"total"`
 }
 
-func (p *Pager) Offset() uint {
-	p.secure()
+func (p *Pager) Offset() uint64 {
+	p.Secure()
 	return (p.Page - 1) * p.PageSize
 }
 
-func (p *Pager) Limit() uint {
-	p.secure()
+func (p *Pager) Limit() uint64 {
+	p.Secure()
 	return p.PageSize
 }
 
-func (p *Pager) secure() *Pager {
+func (p *Pager) Secure() *Pager {
 	if p.Page <= 0 {
 		p.Page = 1
 	}
@@ -40,21 +29,11 @@ func (p *Pager) secure() *Pager {
 	return p
 }
 
-func (r *PageResp) SetPager(page uint, pageSize uint, total uint) {
-	r.Page = page
-	r.PageSize = pageSize
-	r.Total = total
-}
-
-func (r *PageResp) GetTotal() uint {
-	return r.Total
-}
-
-func NewRequestPager(page, pageSize uint) *Pager {
+func NewRequestPager(page, pageSize uint64) *Pager {
 	pager := &Pager{
 		Page:     page,
 		PageSize: pageSize,
 	}
-	pager.secure()
+	pager.Secure()
 	return pager
 }

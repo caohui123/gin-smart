@@ -38,11 +38,11 @@ func (d *CfgDatabase) NewDb() (*gorm.DB, error) {
 	db.LogMode(true)
 
 	db.Callback().Create().Replace("gorm:update_time_stamp", func(scope *gorm.Scope) {
-		scope.SetColumn("CreatedAt", time.Now().Unix())
-		scope.SetColumn("UpdatedAt", time.Now().Unix())
+		scope.SetColumn("CreatedAt", time.Now())
+		scope.SetColumn("UpdatedAt", time.Now())
 	})
 	db.Callback().Update().Replace("gorm:update_time_stamp", func(scope *gorm.Scope) {
-		scope.SetColumn("UpdatedAt", time.Now().Unix())
+		scope.SetColumn("UpdatedAt", time.Now())
 	})
 	return db, nil
 }

@@ -2,63 +2,93 @@ package app
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jangozw/gin-smart/erro"
-	"github.com/jangozw/gin-smart/pkg/util"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jangozw/gin-smart/erro"
 )
 
+// api 处理函数类型
 type ApiHandlerFunc func(c *Context) (data interface{}, err erro.E)
 
+// 注册路由函数类型
+type RegisterRouteFunc func(engine *Engine)
+
 // 定义路由 gin.Engine 统一加warp
-func Engine(engine *gin.Engine) *EngineWarp {
-	return &EngineWarp{engine: engine}
+func NewEngine(registerRoutes RegisterRouteFunc) *Engine {
+	// 注册路由
+	if IsEnvLocal() || IsEnvDev() {
+		gin.SetMode(gin.DebugMode)
+	}
+	eng := &Engine{gin.New()}
+	registerRoutes(eng)
+	return eng
 }
 
-type RouteGroup struct {
+type routeGroup struct {
 	rg *gin.RouterGroup
 }
 
-// 需要什么方法自由搬运 gin.RouteGroup
-func (r *RouteGroup) GET(relativePath string, handler ApiHandlerFunc) {
+// 路由组中间件
+func (r *routeGroup) Use(middleware ...gin.HandlerFunc) *routeGroup {
+	for i, h := range middleware {
+		middleware[i] = WarpMiddleware(h)
+	}
+	r.rg.Use(middleware...)
+	return r
+}
+
+// 需要什么方法自由搬运 gin.routeGroup
+func (r *routeGroup) GET(relativePath string, handler ApiHandlerFunc) {
 	r.rg.GET(relativePath, WarpApi(handler))
 }
-func (r *RouteGroup) POST(relativePath string, handler ApiHandlerFunc) {
+
+func (r *routeGroup) POST(relativePath string, handler ApiHandlerFunc) {
 	r.rg.POST(relativePath, WarpApi(handler))
 }
-func (r *RouteGroup) DELETE(relativePath string, handler ApiHandlerFunc) {
+
+func (r *routeGroup) DELETE(relativePath string, handler ApiHandlerFunc) {
 	r.rg.DELETE(relativePath, WarpApi(handler))
 }
-func (r *RouteGroup) Any(relativePath string, handler ApiHandlerFunc) {
+
+func (r *routeGroup) Any(relativePath string, handler ApiHandlerFunc) {
 	r.rg.Any(relativePath, WarpApi(handler))
 }
-func (r *RouteGroup) PATCH(relativePath string, handler ApiHandlerFunc) {
+
+func (r *routeGroup) PATCH(relativePath string, handler ApiHandlerFunc) {
 	r.rg.PATCH(relativePath, WarpApi(handler))
 }
-func (r *RouteGroup) OPTIONS(relativePath string, handler ApiHandlerFunc) {
+
+func (r *routeGroup) OPTIONS(relativePath string, handler ApiHandlerFunc) {
 	r.rg.OPTIONS(relativePath, WarpApi(handler))
 }
-func (r *RouteGroup) PUT(relativePath string, handler ApiHandlerFunc) {
+
+func (r *routeGroup) PUT(relativePath string, handler ApiHandlerFunc) {
 	r.rg.PUT(relativePath, WarpApi(handler))
 }
-func (r *RouteGroup) HEAD(relativePath string, handler ApiHandlerFunc) {
+
+func (r *routeGroup) HEAD(relativePath string, handler ApiHandlerFunc) {
 	r.rg.HEAD(relativePath, WarpApi(handler))
 }
 
 // 需要用其他的再加
 
 //
-type EngineWarp struct {
+type Engine struct {
 	engine *gin.Engine
 }
 
-func (e *EngineWarp) Group(relativePath string, handlers ...gin.HandlerFunc) *RouteGroup {
+func (e *Engine) Group(relativePath string, handlers ...gin.HandlerFunc) *routeGroup {
 	for i, h := range handlers {
 		handlers[i] = WarpMiddleware(h)
 	}
 	group := e.engine.Group(relativePath, handlers...)
-	return &RouteGroup{rg: group}
+	return &routeGroup{rg: group}
+}
+
+func (e *Engine) Run() error {
+	return e.engine.Run(HttpServeAddr())
 }
 
 // 需要用其他的再加
@@ -66,7 +96,7 @@ func (e *EngineWarp) Group(relativePath string, handlers ...gin.HandlerFunc) *Ro
 // api 捕获异常
 func WarpApi(handler ApiHandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := &Context{Context:c}
+		ctx := &Context{Context: c}
 		defer func() {
 			if msg := recover(); msg != nil {
 				defer func() {
@@ -95,7 +125,7 @@ func WarpMiddleware(handler gin.HandlerFunc) gin.HandlerFunc {
 					}
 				}()
 				err := erro.Inner(fmt.Sprintf("%v", msg))
-				AbortJSON(&Context{Context:c}, ResponseFail(err))
+				AbortJSON(&Context{Context: c}, ResponseFail(err))
 				LogApiPanic(c, msg)
 			}
 		}()
@@ -106,28 +136,14 @@ func WarpMiddleware(handler gin.HandlerFunc) gin.HandlerFunc {
 	}
 }
 
-// 输出
+// 正常输出
 func OutputJSON(c *Context, resp *response) {
-	// 如果是分页请求,改变下返回结构
-	if c.outputPager == true {
-		type pageOutput struct {
-			Pager util.PageResp `json:"pager"`
-			List  interface{}   `json:"list"`
-		}
-		resp.Data = pageOutput{
-			Pager: util.PageResp{
-				Page:     c.Pager().Page,
-				PageSize: c.Pager().PageSize,
-				Total:    c.recordsCount,
-			},
-			List: resp,
-		}
-	}
-	c.Set(CtxKeyResponse, resp)
+	c.setResponse(resp)
 	c.JSON(http.StatusOK, resp)
 }
 
+// 中断并输出
 func AbortJSON(c *Context, resp *response) {
-	c.Set(CtxKeyResponse, resp)
+	c.setResponse(resp)
 	c.AbortWithStatusJSON(http.StatusOK, resp)
 }

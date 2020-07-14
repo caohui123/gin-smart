@@ -1,7 +1,5 @@
 package erro
 
-import "fmt"
-
 // 错误接口
 type E interface {
 	Error() string
@@ -62,6 +60,7 @@ func Fail(code int, msg ...string) E {
 func FailCn() E {
 	return &errInfo{code: Failed, msg: ""}
 }
+
 func FailBy(err error) E {
 	return &errInfo{code: Failed, msg: err.Error()}
 }

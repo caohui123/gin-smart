@@ -3,7 +3,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/jangozw/gin-smart/config"
 	"github.com/jangozw/gin-smart/param"
@@ -49,9 +48,17 @@ var serviceMap = loadServiceMap{
 	DbService:    LoadDb,
 }
 
+func (m loadServiceMap) keys() []string {
+	keys := make([]string, 0)
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // app 包初始化，加载服务失败要panic
 // cfg，logger 是系统要求强制加载的，其他服务可选
-func LoadServices(services ...string) {
+func InitServices(services ...string) {
 	LoadCfg()
 	serviceMap[LogService] = LoadLogger
 
@@ -67,7 +74,9 @@ func LoadServices(services ...string) {
 			Loaded = append(Loaded, key)
 		}
 	}
-	fmt.Println("--app加载服务完成, loaded:", strings.Join(services, `,`))
+	if Logger != nil {
+		Logger.Infof("%s init successfully! loaded services: %s", param.AppName, Loaded)
+	}
 }
 
 // loadCfg 从启动参数或者项目目录中查找并加载配置文件
@@ -143,12 +152,4 @@ func LoadRedis() (err error) {
 	}
 	Redis, err = lib.NewRedis(cfgRedis)
 	return
-}
-
-func (m loadServiceMap) keys() []string {
-	keys := make([]string, 0)
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
 }

@@ -3,8 +3,7 @@ package model
 import (
 	"errors"
 
-	"github.com/jinzhu/gorm"
-
+	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/app"
 	"github.com/jangozw/gin-smart/pkg/util"
 )
@@ -15,50 +14,53 @@ const (
 )
 
 // User 用户表
-type SampleUser struct {
-	gorm.Model
+type User struct {
+	Model
 	Name     string // 姓名
 	Mobile   string `gorm:"index"` // 手机号
 	Password string // 密码
 	Status   int8   // 状态
 }
 
+func (m *User) CheckPwd(input string) bool {
+	return m.Password == util.Sha256(input+"")
+}
+
 // UserToken 用户token表
-type SampleUserToken struct {
-	gorm.Model
+type UserToken struct {
+	Model
 	UserID    int64  `gorm:"index"` // 用户id
 	Token     string // token
 	ExpiredAt int64  // 过期时间
 }
 
 //
-func SampleAddUser(name, mobile, pwd string) (SampleUser, error) {
+func AddUser(name, mobile, pwd string) (User, error) {
 	var total int
-	if err := app.Db.Model(&SampleUser{}).Where("mobile=?", mobile).Count(&total).Error; err != nil {
-		return SampleUser{}, err
+	if err := app.Db.Model(&User{}).Where("mobile=?", mobile).Count(&total).Error; err != nil {
+		return User{}, err
 	}
 	if total > 0 {
-		return SampleUser{}, errors.New("account already exist")
+		return User{}, errors.New("account already exist")
 	}
-	user := SampleUser{
+	user := User{
 		Name:     name,
 		Mobile:   mobile,
-		Password: SampleMakeUserPwd(pwd),
+		Password: makeUserPwd(pwd),
 	}
 	return user, app.Db.Create(&user).Error
 }
 
-func SampleFindUserByMobile(mobile string) (user SampleUser, err error) {
+func FindUserByMobile(mobile string) (user User, err error) {
 	if err = app.Db.Where("mobile=?", mobile).First(&user).Error; err != nil {
 		return
 	}
 	return user, nil
 }
 
-func SampleMakeUserPwd(input string) string {
+func makeUserPwd(input string) string {
 	return util.Sha256(input + "")
 }
 
-func (m *SampleUser) CheckPwd(input string) bool {
-	return m.Password == util.Sha256(input+"")
+func UserList(search param.UserListRequest, pager util.Pager) {
 }

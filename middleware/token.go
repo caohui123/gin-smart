@@ -16,7 +16,7 @@ func CheckToken(c *gin.Context) {
 		return
 	}
 	if _, err := app.ParseUserByToken(token); err != nil {
-		app.AbortJSON(app.Ctx(c), app.ResponseFailByCode(erro.ErrToken))
+		app.AbortJSON(app.Ctx(c), app.ResponseFail(erro.Info(erro.ErrToken, err.Error())))
 		return
 	}
 	// 继续下一步

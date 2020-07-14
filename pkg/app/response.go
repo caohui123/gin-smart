@@ -6,6 +6,19 @@ import (
 	"github.com/jangozw/gin-smart/erro"
 )
 
+// 带分页的输出结果
+type PagerResponseData struct {
+	Pager *Pager      `json:"pager"`
+	List  interface{} `json:"list"`
+}
+
+func PagerResponse(pager *Pager, list interface{}) *PagerResponseData {
+	return &PagerResponseData{
+		Pager: pager,
+		List:  list,
+	}
+}
+
 // api 接口响应结果
 type response struct {
 	Code      int         `json:"code"`

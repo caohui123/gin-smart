@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/pkg/app"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 func LogRequest(c *gin.Context) {
