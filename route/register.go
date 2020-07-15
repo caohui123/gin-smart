@@ -1,9 +1,10 @@
 package route
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/api/sample"
 	"github.com/jangozw/gin-smart/config"
-	"github.com/jangozw/gin-smart/erro"
+	"github.com/jangozw/gin-smart/erron"
 	"github.com/jangozw/gin-smart/middleware"
 	"github.com/jangozw/gin-smart/pkg/app"
 )
@@ -15,11 +16,11 @@ func Register(router *app.Engine) {
 		sampleGroup  = router.Group("/sample", middleware.LogRequest, middleware.Header)
 		homeGroup    = router.Group("/", middleware.LogRequest, middleware.Header)
 		v1Group      = router.Group("/v1", middleware.LogRequest, middleware.Header)
-		v1LoginGroup = router.Group("/v1", middleware.LogRequest, middleware.Header, middleware.CheckToken)
+		v1LoginGroup = router.Group("/v1", middleware.LogRequest, middleware.Header, middleware.NeedLogin)
 	)
 	{
 		// 定义路由
-		homeGroup.GET("", func(c *app.Context) (data interface{}, err erro.E) {
+		homeGroup.GET("", func(c *gin.Context) (data interface{}, err erron.E) {
 			return "welcome", nil
 		})
 	}
@@ -31,7 +32,7 @@ func Register(router *app.Engine) {
 
 		// sampleGroup 需要登陆的路由
 		{
-			sampleGroup.Use(middleware.CheckToken)
+			sampleGroup.Use(middleware.NeedLogin)
 
 			// 退出登陆
 			sampleGroup.POST("logout", sample.Logout)
@@ -43,15 +44,15 @@ func Register(router *app.Engine) {
 
 	// v1免登陆组
 	{
-		v1Group.GET("/test", func(c *app.Context) (data interface{}, err erro.E) {
+		v1Group.GET("/test", func(c *gin.Context) (data interface{}, err erron.E) {
 			return "test", nil
 		})
 	}
 
 	// v1需要登陆组
 	{
-		v1LoginGroup.GET(`/config`, func(c *app.Context) (data interface{}, err erro.E) {
-			c.MustLoginUser()
+		v1LoginGroup.GET(`/config`, func(c *gin.Context) (data interface{}, err erron.E) {
+			app.MustGetLoginUser(c)
 			return config.GetAllStates(), nil
 		})
 	}

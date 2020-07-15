@@ -37,17 +37,11 @@ func stack() *cli.App {
 		},
 		Name:    param.AppName,
 		Version: app.BuildInfo,
-		Usage:   usage(),
-		Action:  action,
+		Usage:   fmt.Sprintf("./%s -%s=%s", param.AppName, param.ArgConfig, param.ArgConfigFilename),
+		Action: func(c *cli.Context) error {
+			// 初始化服务，注册路由
+			app.InitServices()
+			return app.NewGin(route.Register).Run()
+		},
 	}
-}
-
-// 初始化服务，注册路由
-func action(c *cli.Context) error {
-	app.InitServices()
-	return app.NewEngine(route.Register).Run()
-}
-
-func usage() string {
-	return fmt.Sprintf("./%s -%s=%s", param.AppName, param.ArgConfig, param.ArgConfigFilename)
 }

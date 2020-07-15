@@ -3,17 +3,17 @@ package app
 import (
 	"time"
 
-	"github.com/jangozw/gin-smart/erro"
+	"github.com/jangozw/gin-smart/erron"
 )
 
-// 带分页的输出结果
-type PagerResponseData struct {
+type responseWithPager struct {
 	Pager *Pager      `json:"pager"`
 	List  interface{} `json:"list"`
 }
 
-func PagerResponse(pager *Pager, list interface{}) *PagerResponseData {
-	return &PagerResponseData{
+// 带分页的输出结果
+func PagerResponse(pager *Pager, list interface{}) *responseWithPager {
+	return &responseWithPager{
 		Pager: pager,
 		List:  list,
 	}
@@ -33,21 +33,21 @@ func ResponseSuccess(data interface{}) *response {
 }
 
 // 返回错误， 带错误信息
-func ResponseFail(err erro.E) *response {
+func ResponseFail(err erron.E) *response {
 	return Response(err, struct{}{})
 }
 
 func ResponseFailByCode(code int) *response {
-	return Response(erro.Info(code), struct{}{})
+	return Response(erron.Info(code), struct{}{})
 }
 
-func Response(err erro.E, data interface{}) *response {
+func Response(err erron.E, data interface{}) *response {
 	if err == nil {
-		err = erro.Info(erro.Success)
+		err = erron.Info(erron.Success)
 	}
 	errMsg := err.Msg()
 	if errMsg == "" {
-		errMsg = erro.GetCodeMsg(err.Code())
+		errMsg = erron.GetCodeMsg(err.Code())
 	}
 	return &response{
 		err.Code(),

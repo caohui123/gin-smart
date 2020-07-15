@@ -18,9 +18,7 @@ func LogRequest(c *gin.Context) {
 
 // api 接口日志记录请求和返回
 func apiLog(c *gin.Context) {
-	ctx := app.Ctx(c)
-	user, _ := ctx.LoginUser()
-
+	user, _ := app.GetLoginUser(c)
 	start := c.GetTime(app.CtxStartTime)
 	// 执行时间
 	latency := time.Now().Sub(start)

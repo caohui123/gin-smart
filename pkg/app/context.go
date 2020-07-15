@@ -4,12 +4,11 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/jangozw/gin-smart/erro"
+	"github.com/jangozw/gin-smart/erron"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jangozw/gin-smart/param"
 	"github.com/jangozw/gin-smart/pkg/auth"
-	"github.com/jangozw/gin-smart/pkg/util"
 )
 
 const (
@@ -44,69 +43,47 @@ func ParseUserByToken(token string) (TokenPayload, error) {
 	return user, nil
 }
 
-// 用户api 请求
-type Context struct {
-	*gin.Context
-	pager        *util.Pager
-	loginUser    LoginUser
-	outputPager  bool
-	recordsCount uint
-}
-
-func Ctx(c *gin.Context) *Context {
-	return &Context{Context: c}
-}
-
-func (c *Context) LoginUser() (LoginUser, error) {
-	if c.loginUser.ID == 0 {
-		info, err := ParseUserByToken(c.GetHeader(param.TokenHeaderKey))
-		if err != nil {
-			return c.loginUser, err
-		}
-		c.loginUser = LoginUser{ID: info.UserID}
+func GetLoginUser(c *gin.Context) (user LoginUser, err error) {
+	info, err := ParseUserByToken(c.GetHeader(param.TokenHeaderKey))
+	if err != nil {
+		return user, err
 	}
-	return c.loginUser, nil
+	return LoginUser{ID: info.UserID}, nil
 }
 
-func (c *Context) MustLoginUser() LoginUser {
-	user, err := c.LoginUser()
+func MustGetLoginUser(c *gin.Context) LoginUser {
+	user, err := GetLoginUser(c)
 	if err != nil || user.ID == 0 {
 		panic(err)
 	}
-	return c.loginUser
+	return user
 }
 
 // 绑定输入参数
-func (c *Context) BindInput(input interface{}) erro.E {
+func BindInput(c *gin.Context, input interface{}) erron.E {
 	if err := checkInput(input); err == nil {
 		if err := c.ShouldBind(input); err != nil {
-			return erro.Fail(erro.ErrRequestParams, err.Error())
+			return erron.Fail(erron.ErrRequestParams, err.Error())
 		}
 		// 如果实现了 params 接口就验证参数
 		if obj, ok := input.(paramsCheck); ok {
 			if err := obj.Check(); err != nil {
-				return erro.Fail(erro.ErrRequestParams, err.Error())
+				return erron.Fail(erron.ErrRequestParams, err.Error())
 			}
 		}
 	}
 	return nil
 }
 
-// 输出结构展示分页
-func (c *Context) SetPager(count uint) {
-	c.recordsCount = count
-	c.outputPager = true
-}
-
 // 展示的分页
-func (c *Context) GetPager() *Pager {
+func GetPager(c *gin.Context) *Pager {
 	pager := &Pager{}
 	c.ShouldBind(pager)
 	pager.Secure()
 	return pager
 }
 
-func (c *Context) setResponse(resp *response) {
+func setResponse(c *gin.Context, resp *response) {
 	c.Set(CtxKeyResponse, resp)
 }
 

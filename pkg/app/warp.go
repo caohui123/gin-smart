@@ -1,22 +1,25 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
-	"github.com/jangozw/gin-smart/erro"
+	"github.com/jangozw/gin-smart/erron"
 )
 
 // api 处理函数类型
-type ApiHandlerFunc func(c *Context) (data interface{}, err erro.E)
+type ApiHandlerFunc func(c *gin.Context) (data interface{}, err erron.E)
 
 // 注册路由函数类型
 type RegisterRouteFunc func(engine *Engine)
 
 // 定义路由 gin.Engine 统一加warp
-func NewEngine(registerRoutes RegisterRouteFunc) *Engine {
+func NewGin(registerRoutes RegisterRouteFunc) *Engine {
 	// 注册路由
 	if IsEnvLocal() || IsEnvDev() {
 		gin.SetMode(gin.DebugMode)
@@ -96,21 +99,20 @@ func (e *Engine) Run() error {
 // api 捕获异常
 func WarpApi(handler ApiHandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := &Context{Context: c}
 		defer func() {
 			if msg := recover(); msg != nil {
 				defer func() {
 					if msg := recover(); msg != nil {
-						c.AbortWithStatusJSON(http.StatusOK, response{Code: erro.ErrInternal, Msg: "bad request", Timestamp: time.Now().Unix(), Data: nil})
+						c.AbortWithStatusJSON(http.StatusOK, response{Code: erron.ErrInternal, Msg: "bad request", Timestamp: time.Now().Unix(), Data: nil})
 					}
 				}()
-				err := erro.Inner(fmt.Sprintf("%v", msg))
-				AbortJSON(ctx, ResponseFail(err))
+				err := erron.Inner(fmt.Sprintf("%v", msg))
+				AbortJSON(c, ResponseFail(err))
 				LogApiPanic(c, msg)
 			}
 		}()
-		data, err := handler(ctx)
-		OutputJSON(ctx, Response(err, data))
+		data, err := handler(c)
+		OutputJSON(c, Response(err, data))
 	}
 }
 
@@ -121,11 +123,11 @@ func WarpMiddleware(handler gin.HandlerFunc) gin.HandlerFunc {
 			if msg := recover(); msg != nil {
 				defer func() {
 					if msg := recover(); msg != nil {
-						c.AbortWithStatusJSON(http.StatusOK, response{Code: erro.ErrInternal, Msg: "bad request", Timestamp: time.Now().Unix(), Data: nil})
+						c.AbortWithStatusJSON(http.StatusOK, response{Code: erron.ErrInternal, Msg: "bad request", Timestamp: time.Now().Unix(), Data: nil})
 					}
 				}()
-				err := erro.Inner(fmt.Sprintf("%v", msg))
-				AbortJSON(&Context{Context: c}, ResponseFail(err))
+				err := erron.Inner(fmt.Sprintf("%v", msg))
+				AbortJSON(c, ResponseFail(err))
 				LogApiPanic(c, msg)
 			}
 		}()
@@ -137,13 +139,44 @@ func WarpMiddleware(handler gin.HandlerFunc) gin.HandlerFunc {
 }
 
 // 正常输出
-func OutputJSON(c *Context, resp *response) {
-	c.setResponse(resp)
+func OutputJSON(c *gin.Context, resp *response) {
+	setResponse(c, resp)
 	c.JSON(http.StatusOK, resp)
 }
 
 // 中断并输出
-func AbortJSON(c *Context, resp *response) {
-	c.setResponse(resp)
+func AbortJSON(c *gin.Context, resp *response) {
+	setResponse(c, resp)
 	c.AbortWithStatusJSON(http.StatusOK, resp)
+}
+
+// api 请求发生了panic 记入日志
+func LogApiPanic(c *gin.Context, panicMsg interface{}) {
+	user, _ := GetLoginUser(c)
+	start := c.GetTime(CtxStartTime)
+	// 执行时间
+	latency := time.Now().Sub(start)
+	resp, ok := c.Get(CtxKeyResponse)
+	if !ok {
+		resp = struct{}{}
+	}
+	var query interface{}
+	if c.Request.Method == "GET" {
+		query = c.Request.URL.Query()
+	} else {
+		postData, _ := c.GetRawData()
+		query := make(map[string]interface{})
+		json.Unmarshal(postData, &query)
+	}
+
+	// log 里有json.Marshal() 导致url转义字符
+	Logger.WithFields(logrus.Fields{
+		"uid":      user.ID,
+		"query":    query,
+		"response": resp,
+		"method":   c.Request.Method,
+		"uri":      c.Request.URL.RequestURI(),
+		"latency":  fmt.Sprintf("%3v", latency),
+		"ip":       c.ClientIP(),
+	}).Infof("--panic: %s | %s %s", panicMsg, c.Request.Method, c.Request.URL.RequestURI())
 }

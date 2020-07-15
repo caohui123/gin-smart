@@ -8,7 +8,7 @@ import (
 )
 
 func TestDb(t *testing.T) {
-	user := &SampleUser{}
+	user := &User{}
 	err := app.Db.Where("id=?", 1).First(&user).Error
 	assert.Nil(t, err)
 }

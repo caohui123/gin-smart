@@ -1,4 +1,4 @@
-package erro
+package erron
 
 // 错误接口
 type E interface {

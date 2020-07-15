@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/jangozw/gin-smart/erro"
+	"github.com/jangozw/gin-smart/erron"
 	"github.com/jangozw/gin-smart/param"
 
 	"github.com/gin-gonic/gin"
@@ -9,14 +9,14 @@ import (
 	"github.com/jangozw/gin-smart/pkg/app"
 )
 
-func CheckToken(c *gin.Context) {
+func NeedLogin(c *gin.Context) {
 	token := c.GetHeader(param.TokenHeaderKey)
 	if token == "" {
-		app.AbortJSON(app.Ctx(c), app.ResponseFailByCode(erro.ErrToken))
+		app.AbortJSON(c, app.ResponseFailByCode(erron.ErrToken))
 		return
 	}
 	if _, err := app.ParseUserByToken(token); err != nil {
-		app.AbortJSON(app.Ctx(c), app.ResponseFail(erro.Info(erro.ErrToken, err.Error())))
+		app.AbortJSON(c, app.ResponseFail(erron.Info(erron.ErrToken, err.Error())))
 		return
 	}
 	// 继续下一步

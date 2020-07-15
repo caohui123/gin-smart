@@ -61,7 +61,6 @@ func (m loadServiceMap) keys() []string {
 func InitServices(services ...string) {
 	LoadCfg()
 	serviceMap[LogService] = LoadLogger
-
 	if len(services) == 0 {
 		services = serviceMap.keys()
 	}
@@ -69,13 +68,13 @@ func InitServices(services ...string) {
 	for key, load := range serviceMap {
 		if util.InStringSlice(key, services) {
 			if err := load(); err != nil {
-				panic("app加载服务失败:" + err.Error())
+				panic("app load service fail: " + err.Error())
 			}
 			Loaded = append(Loaded, key)
 		}
 	}
 	if Logger != nil {
-		Logger.Infof("%s init successfully! loaded services: %s", param.AppName, Loaded)
+		Logger.Infof("%s init services successfully! loaded services: %s", param.AppName, Loaded)
 	}
 }
 
@@ -91,7 +90,7 @@ func LoadCfg() {
 		// 配置文件相对于运行目录的路径
 		filename := param.ArgConfigFilename
 
-		err := errors.New(fmt.Sprintf("查找配置文件%s出错: %s", filename, "文件不存在"))
+		err := errors.New(fmt.Sprintf("Try to find config file %s failed: %s", filename, "no such file"))
 		f, _ := util.FindConfigFile(filename, configFlag)
 		if f == "" {
 			panic(err)
@@ -104,7 +103,7 @@ func LoadCfg() {
 	}
 	Cfg = &config.Config{}
 	if err := util.ParseIni(ConfigFile, Cfg); err != nil {
-		panic(fmt.Sprintf("解析配置文件%s出错: %s", ConfigFile, err.Error()))
+		panic(fmt.Sprintf("Parse config file %s to config.Config object failed: %s", ConfigFile, err.Error()))
 	}
 }
 
@@ -117,7 +116,7 @@ func LoadLogger() (err error) {
 	module := param.AppName
 	Logger, err = lib.NewLogger(Cfg.General.LogDir, module)
 	if err == nil {
-		fmt.Println("加载服务app Logger 成功,module=" + module + ",log_dir=" + Cfg.General.LogDir)
+		fmt.Println("app loaded service Logger successfully!  module=" + module + ",log_dir=" + Cfg.General.LogDir)
 	}
 	return
 }
@@ -136,6 +135,9 @@ func LoadDb() (err error) {
 		Database: Cfg.Database.Database,
 	}
 	Db, err = lib.NewDb(cfgDb)
+	if err == nil {
+		fmt.Println("app loaded service Db successfully! ")
+	}
 	return
 }
 
@@ -151,5 +153,8 @@ func LoadRedis() (err error) {
 		DbNum:    Cfg.Redis.DbNum,
 	}
 	Redis, err = lib.NewRedis(cfgRedis)
+	if err == nil {
+		fmt.Println("app loaded service Redis successfully! ")
+	}
 	return
 }
